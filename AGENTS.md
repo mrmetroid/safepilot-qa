@@ -65,6 +65,19 @@ Serve a high-contrast UI from the Vultr VM: URL bar, **Load Adversarial Test App
 
 Provision Ubuntu 24.04 Cloud Compute in `sto`, install Docker, build the sandbox image, put Caddy in front, open 22/80/443, and run the Section 8 verification checklist. Record the demo video only after a live Containment Moment has been seen on the public URL.
 
+## Developer CLI
+
+`scripts/safepilot` runs a Typer CLI (`backend/app/cli.py`) over the same orchestrator as the dashboard. See BUILD_SPEC Section 10.
+
+```bash
+scripts/safepilot health                 # same report as GET /api/health
+scripts/safepilot sandbox verify         # start a real sandbox, check Section 3 / 8.4 isolation, destroy it
+scripts/safepilot run --preset           # full 3-box sweep in the terminal; you answer Approve/Block
+scripts/safepilot run https://example.com --json --out run-output
+```
+
+The CLI never runs Playwright in-process and has no auto-approve option. An approval comes only from an explicit `y` at a terminal; no terminal, `--block-approvals`, or any error means `block`. Exit codes: 0 `SHIP IT`, 1 `DO NOT SHIP`, 2 no verdict.
+
 ## Coding conventions
 
 - Prefer clear names and small modules over cleverness. This is a same-day hackathon build.
