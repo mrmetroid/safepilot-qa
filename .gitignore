@@ -1,7 +1,8 @@
-# Secrets and local env
+# Secrets and local env: ignore every .env variant, keep only the committed examples (fake values)
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
+!.env.local.example
 *.pem
 *.key
 
@@ -47,3 +48,6 @@ artifacts/
 screenshots/
 run-output/
 *.tsbuildinfo
+
+# e2e screenshots and reports
+e2e/report/

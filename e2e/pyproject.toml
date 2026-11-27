@@ -1,0 +1,28 @@
+[project]
+name = "safepilot-e2e"
+version = "0.1.0"
+description = "Playwright + Vultr Serverless Inference checks of the three SafePilot front ends at mobile and desktop sizes"
+requires-python = ">=3.12"
+dependencies = [
+    "pytest>=8.3",
+    "pytest-playwright>=0.6.2",
+    "playwright==1.49.0",
+    "pillow>=11.0",
+    # Same versions as backend/requirements.txt: the vision check reuses app.inference.agents.audit_mobile.
+    "openai==1.59.7",
+    "pydantic==2.10.5",
+    "python-dotenv==1.0.1",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "live: drives a real sweep through the local control plane (Docker sandboxes + Vultr inference)",
+]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 120
