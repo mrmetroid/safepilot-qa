@@ -961,6 +961,25 @@ If time is slipping by 16:45, cut in this order: visual polish, custom-URL nicet
 
 ---
 
+## Section 10. Developer CLI and optional MCP server
+
+Additive decision (27 November 2026). The control plane has a Typer CLI, `scripts/safepilot` (`backend/app/cli.py`), so every piece can be exercised from a terminal as a developer tool.
+
+| Command | What it does |
+| --- | --- |
+| `health [--json]` | The Section 6.1 report. Shared code with `GET /api/health` (`app/health.py`) |
+| `sandbox verify` | Starts one sandbox through `docker_runner.Sandbox`, checks `inspect_env()` against Section 3 (`app/orch/isolation.py`), destroys it |
+| `sandbox sweep` | Removes leftover sandbox containers |
+| `run URL` / `run --preset` | Full sweep via `run_manager.create_run`; streams events; prompts a human for Approve/Block; saves screenshots with `--out` |
+
+Rules:
+
+- The CLI is a control plane, not a sandbox. It reuses the orchestrator and never runs Playwright in-process.
+- No auto-approve. Only an explicit "yes" from a person at a terminal approves. Non-interactive use blocks.
+- Optional MCP server (only after the core demo works): expose run, status and report tools over the same orchestrator. **Do not expose approve as an MCP tool.** An agent approving its own irreversible action defeats the human Approve-Before-Submit gate (guardrail 5).
+
+---
+
 ## Appendix A. Box identifiers
 
 Use these IDs consistently in code, events, and UI:
