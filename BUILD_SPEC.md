@@ -1,6 +1,6 @@
 # Canary Swarm Build Specification
 
-This is the engineering source of truth for Canary Swarm. Implement against this document. Do not invent infrastructure, models, URLs, or hackathon rules that are not written here.
+This is the engineering reference for Canary Swarm: it defines *how* each part is built. *What* will be implemented, in which order and by whom, is decided in [`docs/PLAN.md`](./docs/PLAN.md), which is the source of truth for scope. Implement every step in that plan against this document. Do not invent infrastructure, models, URLs, or hackathon rules that are not written here. If this document and `docs/PLAN.md` disagree about what to build, the plan wins and this document is updated to match.
 
 Companion files:
 
@@ -958,6 +958,25 @@ This is a same-day plan. Times are Europe/Stockholm (CET). If you start later, k
 | **18:45-19:00** | Buffer only. No new features. Hard cutoff: **19:00 CET**. |
 
 If time is slipping by 16:45, cut in this order: visual polish, custom-URL niceties, CPU meters that are not needed for containment, Node rewrites. Never cut: Docker isolation, inference on Vultr, Box 1 approval, Box 3 containment receipt, hosting the UI on the Vultr VM.
+
+---
+
+## Section 10. Developer CLI and optional MCP server
+
+Additive decision (27 November 2026). The control plane has a Typer CLI, `scripts/safepilot` (`backend/app/cli.py`), so every piece can be exercised from a terminal as a developer tool.
+
+| Command | What it does |
+| --- | --- |
+| `health [--json]` | The Section 6.1 report. Shared code with `GET /api/health` (`app/health.py`) |
+| `sandbox verify` | Starts one sandbox through `docker_runner.Sandbox`, checks `inspect_env()` against Section 3 (`app/orch/isolation.py`), destroys it |
+| `sandbox sweep` | Removes leftover sandbox containers |
+| `run URL` / `run --preset` | Full sweep via `run_manager.create_run`; streams events; prompts a human for Approve/Block; saves screenshots with `--out` |
+
+Rules:
+
+- The CLI is a control plane, not a sandbox. It reuses the orchestrator and never runs Playwright in-process.
+- No auto-approve. Only an explicit "yes" from a person at a terminal approves. Non-interactive use blocks.
+- Optional MCP server (only after the core demo works): expose run, status and report tools over the same orchestrator. **Do not expose approve as an MCP tool.** An agent approving its own irreversible action defeats the human Approve-Before-Submit gate (guardrail 5).
 
 ---
 

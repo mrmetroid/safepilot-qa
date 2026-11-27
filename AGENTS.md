@@ -2,7 +2,13 @@
 
 Instructions for Cursor, Claude, GPT, or any other coding agent working in this repository.
 
-Read this file first. For the organizer's official brief (tracks, required stack, deliverables), see [`docs/HACKATHON_BRIEF.md`](./docs/HACKATHON_BRIEF.md). Then implement against [`BUILD_SPEC.md`](./BUILD_SPEC.md) without inventing requirements. If a detail is missing, add a clearly marked `TODO` and keep going. Do not silently change the architecture.
+Read this file first. For the organizer's official brief (tracks, required stack, deliverables), see [`docs/HACKATHON_BRIEF.md`](./docs/HACKATHON_BRIEF.md).
+
+**[`docs/PLAN.md`](./docs/PLAN.md) is the source of truth for what will be implemented**: the steps, their order, their owners and their status. Only work that is a step in `PLAN.md` gets implemented. To add work, add the step to `PLAN.md` first. [`docs/HANDOFF.md`](./docs/HANDOFF.md) says what is current and what is waiting on whom.
+
+Implement each step against [`BUILD_SPEC.md`](./BUILD_SPEC.md), which defines *how*: contracts, flags, prompts and copy. Do not invent requirements. If a detail is missing, add a clearly marked `TODO` and keep going. Do not silently change the architecture. The guardrails below override everything, including `PLAN.md`.
+
+When you finish or start a step, update its `status` and `note` in `PLAN.md` in the same commit. Refresh the plan page with the project-local `plan-dag` skill in [`.claude/skills/plan-dag`](./.claude/skills/plan-dag).
 
 ## Mission (10 lines)
 
@@ -33,7 +39,7 @@ Violate none of these. If a suggested change conflicts with this list, refuse th
 
 ## Recommended implementation order
 
-Do these steps in order. Do not start the dashboard before the sandbox and demo target exist. You will waste time mocking what you can already run.
+Do these steps in order. Do not start the dashboard before the sandbox and demo target exist. You will waste time mocking what you can already run. `docs/PLAN.md` tracks these steps, and any steps added since, with their current status.
 
 ### Step 1. `sandbox-runner` Docker image
 
@@ -59,6 +65,19 @@ Serve a high-contrast UI from the Vultr VM: URL bar, **Load Adversarial Test App
 
 Provision Ubuntu 24.04 Cloud Compute in `sto`, install Docker, build the sandbox image, put Caddy in front, open 22/80/443, and run the Section 8 verification checklist. Record the demo video only after a live Containment Moment has been seen on the public URL.
 
+## Developer CLI
+
+`scripts/safepilot` runs a Typer CLI (`backend/app/cli.py`) over the same orchestrator as the dashboard. See BUILD_SPEC Section 10.
+
+```bash
+scripts/safepilot health                 # same report as GET /api/health
+scripts/safepilot sandbox verify         # start a real sandbox, check Section 3 / 8.4 isolation, destroy it
+scripts/safepilot run --preset           # full 3-box sweep in the terminal; you answer Approve/Block
+scripts/safepilot run https://example.com --json --out run-output
+```
+
+The CLI never runs Playwright in-process and has no auto-approve option. An approval comes only from an explicit `y` at a terminal; no terminal, `--block-approvals`, or any error means `block`. Exit codes: 0 `SHIP IT`, 1 `DO NOT SHIP`, 2 no verdict.
+
 ## Coding conventions
 
 - Prefer clear names and small modules over cleverness. This is a same-day hackathon build.
@@ -68,6 +87,18 @@ Provision Ubuntu 24.04 Cloud Compute in `sto`, install Docker, build the sandbox
 - No em-dashes in user-facing copy. Verdict strings are exactly `DO NOT SHIP` and `SHIP IT`.
 - Commit in small, reviewable chunks: runner, demo-target, control plane, frontend, deploy.
 - Always commit everything. When you finish a change, commit all modified and new files right away without asking. Never leave work uncommitted. Never commit secrets (`.env`, keys); `.gitignore` covers them.
+
+## CI
+
+CI runs on every PR and on pushes to `main` (`.github/workflows/ci.yml`). The workflow only installs tools; all logic lives in the `ci/` uv project behind a Typer CLI, so the same pipeline runs locally:
+
+```bash
+uv run --project ci safepilot-ci list               # show the plan
+uv run --project ci safepilot-ci run                # lint, test, frontend, images
+uv run --project ci safepilot-ci run lint test      # selected stages
+```
+
+Stages: `lint` (ruff), `test` (CI unit tests, backend import smoke, backend pytest `-m "not docker"` once `backend/tests` exists), `frontend` (`npm ci && npm run build`), `images` (build both images, then run the Section 8.4 isolation probe in the sandbox image). Test the CI code with fakes, not mocks. Do not weaken the isolation probe to get a green build.
 
 ## Verification checklist (do not call the build "done" until all of these pass)
 
