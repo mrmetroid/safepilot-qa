@@ -61,6 +61,66 @@ def ensure_network() -> None:
         client().networks.create(settings.sandbox_network, driver="bridge")
 
 
+def sandbox_run_kwargs(*, name: str, labels: dict[str, str]) -> dict[str, Any]:
+    """Host config for one disposable Playwright sandbox.
+
+    These flags are the hackathon boundary: a container on the Stockholm Cloud
+    Compute VM, never Playwright inside the control-plane process. The image
+    user is pinned to pwuser so a rebuilt image cannot silently become root.
+    shm_size is /dev/shm only; it is not a host directory mount.
+    """
+    return {
+        "image": settings.sandbox_image,
+        "name": name,
+        "detach": True,
+        "environment": {},
+        "user": "pwuser",
+        "mem_limit": settings.sandbox_mem_limit,
+        "memswap_limit": settings.sandbox_memswap_limit,
+        "nano_cpus": settings.sandbox_nano_cpus,
+        "pids_limit": settings.sandbox_pids_limit,
+        "read_only": True,
+        "tmpfs": {"/tmp": f"rw,noexec,nosuid,size={settings.sandbox_tmpfs_size}"},
+        "cap_drop": ["ALL"],
+        "security_opt": ["no-new-privileges:true"],
+        "network": settings.sandbox_network,
+        "privileged": False,
+        "stdin_open": True,
+        "shm_size": "256m",
+        "labels": labels,
+    }
+
+
+def assert_sandbox_kwargs(kwargs: dict[str, Any]) -> None:
+    """Refuse a spawn that would weaken the Section 3 boundary."""
+    if kwargs.get("privileged") or kwargs.get("network") in {None, "host", "none"}:
+        raise RuntimeError("sandbox network must be the dedicated bridge, never host or none")
+    if kwargs.get("network") != settings.sandbox_network:
+        raise RuntimeError("sandbox network must be the dedicated bridge")
+    if kwargs.get("environment") not in ({}, None):
+        raise RuntimeError("sandbox environment must be empty")
+    if kwargs.get("user") in {None, "", "0", "root", "0:0"}:
+        raise RuntimeError("sandbox user must be non-root")
+    if not kwargs.get("read_only"):
+        raise RuntimeError("sandbox root must be read-only")
+    if "ALL" not in (kwargs.get("cap_drop") or []):
+        raise RuntimeError("sandbox must drop all capabilities")
+    if "no-new-privileges:true" not in (kwargs.get("security_opt") or []):
+        raise RuntimeError("sandbox must set no-new-privileges")
+    if not kwargs.get("mem_limit") or not kwargs.get("memswap_limit"):
+        raise RuntimeError("sandbox must set a memory cap with no extra swap")
+    if not kwargs.get("pids_limit") or not kwargs.get("nano_cpus"):
+        raise RuntimeError("sandbox must set pid and cpu caps")
+    mounts = list(kwargs.get("volumes") or []) + list(kwargs.get("binds") or [])
+    for mount in mounts:
+        text = str(mount)
+        if "docker.sock" in text or text.startswith("/") or text.startswith("/:"):
+            raise RuntimeError("sandbox must not mount the host or the docker socket")
+    tmpfs = kwargs.get("tmpfs") or {}
+    if list(tmpfs) != ["/tmp"]:
+        raise RuntimeError("sandbox may only tmpfs-mount /tmp")
+
+
 @dataclass
 class Stats:
     cpu_pct: float = 0.0
@@ -96,24 +156,12 @@ class Sandbox:
     # ---- lifecycle -------------------------------------------------------
     def start(self, job: dict[str, Any]) -> None:
         """Blocking: create the capped container, attach stdin, send the job."""
-        self.container = client().containers.run(
-            image=settings.sandbox_image,
+        kwargs = sandbox_run_kwargs(
             name=self.name,
-            detach=True,
-            environment={},  # empty: no secrets, no inherited host env
-            mem_limit=settings.sandbox_mem_limit,
-            memswap_limit=settings.sandbox_memswap_limit,
-            nano_cpus=settings.sandbox_nano_cpus,
-            pids_limit=settings.sandbox_pids_limit,
-            read_only=True,
-            tmpfs={"/tmp": f"rw,noexec,nosuid,size={settings.sandbox_tmpfs_size}"},
-            cap_drop=["ALL"],
-            security_opt=["no-new-privileges:true"],
-            network=settings.sandbox_network,
-            privileged=False,
-            stdin_open=True,
             labels={SANDBOX_LABEL: "sandbox", "safepilot.run": self.run_id, "safepilot.box": self.box_id},
         )
+        assert_sandbox_kwargs(kwargs)
+        self.container = client().containers.run(**kwargs)
         self.started_at = time.monotonic()
         self._sock = client().api.attach_socket(self.container.id, params={"stdin": 1, "stream": 1})
         threading.Thread(target=self._pump_stdout, name=f"{self.name}-out", daemon=True).start()
