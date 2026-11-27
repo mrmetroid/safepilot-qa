@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
-# SafePilot QA: idempotent bootstrap for an Ubuntu 24.04 Vultr Cloud Compute VM (region sto).
+# SafePilot QA bootstrap for the hackathon VM.
+# Host: Vultr Cloud Compute, Shared CPU, Ubuntu 24.04, location Stockholm (region id sto).
+# Size: at least 4 vCPU and 8 GB. Plan families vc2, vhf, or vhp. Not VX1.
+# Vultr's Microsandbox guide needs /dev/kvm on a VX1 instance, and Stockholm has no VX1
+# plans. The hackathon allows containers on the VM, so Docker is the sandbox boundary.
+# Docker install follows https://docs.vultr.com/how-to-install-docker-on-ubuntu-24-04
 # Run as root on the VM from the repo checkout: sudo bash deploy/provision.sh
 # Optional env: SITE_ADDRESS (e.g. 1-2-3-4.sslip.io for automatic HTTPS; default ":80")
 set -euo pipefail
@@ -12,8 +17,20 @@ SANDBOX_SUBNET=172.30.0.0/24
 echo "==> packages"
 export DEBIAN_FRONTEND=noninteractive
 apt-get -o DPkg::Lock::Timeout=600 update -y
-apt-get -o DPkg::Lock::Timeout=600 install -y ca-certificates curl git ufw docker.io docker-buildx caddy python3-venv python3-pip
+apt-get -o DPkg::Lock::Timeout=600 install -y ca-certificates curl git ufw caddy python3-venv python3-pip
+
+echo "==> Docker Engine (Vultr Ubuntu 24.04 guide)"
+install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+chmod a+r /etc/apt/keyrings/docker.asc
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
+  | tee /etc/apt/sources.list.d/docker.list > /dev/null
+apt-get -o DPkg::Lock::Timeout=600 update -y
+apt-get -o DPkg::Lock::Timeout=600 install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 systemctl enable --now docker
+if id linuxuser >/dev/null 2>&1; then
+  usermod -aG docker linuxuser
+fi
 
 echo "==> firewall: only 22/80/443 public"
 ufw default deny incoming
