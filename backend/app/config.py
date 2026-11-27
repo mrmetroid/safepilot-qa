@@ -43,6 +43,8 @@ class Settings:
     sandbox_tmpfs_size: str = os.environ.get("SANDBOX_TMPFS_SIZE", "128m")
     sandbox_timeout: int = _int("SANDBOX_TIMEOUT_SECONDS", 60)
     max_concurrent_runs: int = _int("MAX_CONCURRENT_RUNS", 2)
+    # Total agent sandboxes across all runs (each is capped at 512 MiB / 1 vCPU).
+    max_active_sandboxes: int = _int("MAX_ACTIVE_SANDBOXES", 9)
     run_timeout: int = _int("RUN_TIMEOUT_SECONDS", 300)
     max_steps: int = _int("SANDBOX_MAX_STEPS", 14)
     step_timeout: int = _int("SANDBOX_STEP_TIMEOUT_SECONDS", 8)

@@ -42,12 +42,19 @@ def _fmt_history(history: list[dict[str, Any]]) -> str:
 
 # --------------------------------------------------------------------------- planner
 async def plan(persona: str, obs: dict[str, Any], screenshot_b64: str | None, history: list[dict[str, Any]],
-               target_url: str, step: int, max_steps: int) -> dict[str, Any]:
+               target_url: str, step: int, max_steps: int, model: str | None = None, focus: str | None = None,
+               viewport: dict[str, int] | None = None) -> dict[str, Any]:
     if settings.inference_enabled:
         last = history[-1] if history else None
+        goal = prompts.GOALS[persona]
+        if viewport:
+            goal += f" Viewport: {viewport.get('width')}x{viewport.get('height')}."
+        if focus:
+            # Operator-supplied test focus. Treated as guidance only; policy checks still apply to every action.
+            goal += f" Operator focus for this run: {focus}"
         user = prompts.PLANNER_USER.format(
             persona=persona,
-            goal=prompts.GOALS[persona],
+            goal=goal,
             target_url=target_url,
             page_url=obs.get("page_url", ""),
             step=step,
@@ -58,7 +65,7 @@ async def plan(persona: str, obs: dict[str, Any], screenshot_b64: str | None, hi
             last_action_result=json.dumps({"ok": last.get("ok"), "error": last.get("error")}) if last else "none",
         )
         try:
-            out = await chat_json(prompts.PLANNER_SYSTEM, user, screenshot_b64, max_tokens=500)
+            out = await chat_json(prompts.PLANNER_SYSTEM, user, screenshot_b64, max_tokens=500, model=model)
             out.setdefault("action", "done")
             out["source"] = "vultr-inference"
             return out
@@ -150,10 +157,9 @@ def heuristic_plan(persona: str, obs: dict[str, Any], history: list[dict[str, An
 
 
 # --------------------------------------------------------------------------- vision
-def geometry_bugs(obs: dict[str, Any]) -> list[dict[str, Any]]:
-    """Bugs measured directly from the DOM: elements spilling past the 390px viewport."""
+def geometry_bugs(obs: dict[str, Any], vw: int = 390) -> list[dict[str, Any]]:
+    """Bugs measured directly from the DOM: elements spilling past the viewport width."""
     bugs = []
-    vw = 390
     for i, o in enumerate(obs.get("overflow") or []):
         x, y, w, h = o["rect"]
         vis_w = max(10, min(x + w, vw) - max(x, 0))
@@ -162,7 +168,7 @@ def geometry_bugs(obs: dict[str, Any]) -> list[dict[str, Any]]:
         bugs.append({
             "id": f"geo-{i + 1}",
             "severity": sev,
-            "title": f"{'Primary CTA' if re.search(r'buy|cart|checkout|order|pay', o.get('text', ''), re.I) else 'Element'} clipped: overflows the 390px viewport by {hidden}px",
+            "title": f"{'Primary CTA' if re.search(r'buy|cart|checkout|order|pay', o.get('text', ''), re.I) else 'Element'} clipped: overflows the {vw}px viewport by {hidden}px",
             "description": f"\"{o.get('text') or o.get('sel')}\" ({o.get('sel')}) is {w}px wide at x={x}; {hidden}px are clipped off-screen.",
             "bbox": [max(x, 0), y, vis_w, h],
             "source": "dom-geometry",
@@ -180,17 +186,23 @@ def _overlap(a: list[float], b: list[float]) -> float:
     return iw * ih / small
 
 
-async def audit_mobile(obs: dict[str, Any], screenshot_b64: str | None) -> dict[str, Any]:
-    geo = geometry_bugs(obs)
+async def audit_mobile(obs: dict[str, Any], screenshot_b64: str | None, viewport: dict[str, int] | None = None,
+                       model: str | None = None) -> dict[str, Any]:
+    vp = viewport or {"width": 390, "height": 844}
+    geo = geometry_bugs(obs, int(vp.get("width") or 390))
     if settings.inference_enabled and screenshot_b64:
         hint = json.dumps([{"sel": o["sel"], "text": o.get("text"), "rect": o["rect"]} for o in obs.get("overflow") or []]) or "[]"
+        user = prompts.VISION_USER.format(page_url=obs.get("page_url", ""), dom_hint=hint, vw=vp.get("width"), vh=vp.get("height"))
         try:
-            out = await chat_json(
-                prompts.VISION_SYSTEM,
-                prompts.VISION_USER.format(page_url=obs.get("page_url", ""), dom_hint=hint),
-                screenshot_b64,
-                max_tokens=900,
-            )
+            try:
+                out = await chat_json(prompts.VISION_SYSTEM, user, screenshot_b64, max_tokens=900, model=model)
+            except InferenceError as exc:
+                if not model or model == settings.inference_model or isinstance(exc, InferenceDisabled):
+                    raise
+                # The run's chosen model could not audit this screenshot: retry on the default vision model.
+                log.warning("vision audit on %s failed (%s), retrying on %s", model, exc, settings.inference_model)
+                out = await chat_json(prompts.VISION_SYSTEM, user, screenshot_b64, max_tokens=900,
+                                      model=settings.inference_model)
             bugs = [b for b in out.get("bugs") or [] if isinstance(b, dict)]
             for b in bugs:
                 b["source"] = "vultr-vision"
@@ -211,20 +223,20 @@ async def audit_mobile(obs: dict[str, Any], screenshot_b64: str | None) -> dict[
 
 
 # --------------------------------------------------------------------------- fix prompt
-async def fix_prompt(target_url: str, verdict: str, box1: str, box2_bugs: list[dict[str, Any]], box3: str) -> dict[str, Any]:
+async def fix_prompt(target_url: str, verdict: str, box1: str, box2_bugs: list[dict[str, Any]], box3: str,
+                     model: str | None = None) -> dict[str, Any]:
     slim_bugs = [{k: b.get(k) for k in ("severity", "title", "description", "bbox")} for b in box2_bugs]
     if settings.inference_enabled:
-        try:
-            out = await chat_json(
-                prompts.FIX_SYSTEM,
-                prompts.FIX_USER.format(target_url=target_url, verdict=verdict, box1=box1, box2=json.dumps(slim_bugs), box3=box3),
-                max_tokens=900,
-            )
-            if out.get("fix_prompt"):
-                out["source"] = "vultr-inference"
-                return out
-        except (InferenceError, InferenceDisabled) as exc:
-            log.warning("fix prompt failed: %s", exc)
+        user = prompts.FIX_USER.format(target_url=target_url, verdict=verdict, box1=box1, box2=json.dumps(slim_bugs), box3=box3)
+        # Try the run's chosen model first, then the default model, before falling back to the template.
+        for m in dict.fromkeys([model or settings.inference_model, settings.inference_model]):
+            try:
+                out = await chat_json(prompts.FIX_SYSTEM, user, max_tokens=900, model=m)
+                if out.get("fix_prompt"):
+                    out["source"] = "vultr-inference"
+                    return out
+            except (InferenceError, InferenceDisabled) as exc:
+                log.warning("fix prompt on %s failed: %s", m, exc)
     lines = [f"# Fix request: {target_url}", "", f"SafePilot QA verdict: **{verdict}**", "", "## Findings"]
     lines.append(f"- Happy path (desktop): {box1}")
     for b in slim_bugs:
