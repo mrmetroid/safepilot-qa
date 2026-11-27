@@ -69,6 +69,18 @@ Provision Ubuntu 24.04 Cloud Compute in `sto`, install Docker, build the sandbox
 - Commit in small, reviewable chunks: runner, demo-target, control plane, frontend, deploy.
 - Always commit everything. When you finish a change, commit all modified and new files right away without asking. Never leave work uncommitted. Never commit secrets (`.env`, keys); `.gitignore` covers them.
 
+## CI
+
+CI runs on every PR and on pushes to `main` (`.github/workflows/ci.yml`). The workflow only installs tools; all logic lives in the `ci/` uv project behind a Typer CLI, so the same pipeline runs locally:
+
+```bash
+uv run --project ci safepilot-ci list               # show the plan
+uv run --project ci safepilot-ci run                # lint, test, frontend, images
+uv run --project ci safepilot-ci run lint test      # selected stages
+```
+
+Stages: `lint` (ruff), `test` (CI unit tests, backend import smoke, backend pytest `-m "not docker"` once `backend/tests` exists), `frontend` (`npm ci && npm run build`), `images` (build both images, then run the Section 8.4 isolation probe in the sandbox image). Test the CI code with fakes, not mocks. Do not weaken the isolation probe to get a green build.
+
 ## Verification checklist (do not call the build "done" until all of these pass)
 
 - [ ] `GET /api/health` reports the control plane, Docker daemon, and Vultr Inference as reachable.
