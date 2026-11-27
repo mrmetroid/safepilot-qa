@@ -122,7 +122,7 @@ phases:
         title: "Isolation checks in CI and the developer CLI (PRs #3, #4)"
         status: "[~]"
         assignee: gtqgtq
-        note: "PR #3 (CI with the Section 8.4 probe) and PR #4 (safepilot sandbox verify) open"
+        note: "PRs #3 and #4 merged. Main CI red on a colour-sensitive CLI test; fixed on fix/cli-test-ci-colour"
       - id: "5.5"
         title: Preset on the public URL starts 3 boxes; Box 1 waits for Approve or Block
         status: "[ ]"
