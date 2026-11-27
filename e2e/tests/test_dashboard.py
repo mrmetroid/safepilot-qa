@@ -19,6 +19,14 @@ def _in_viewport(page: Page, selector: str, viewport: Viewport) -> None:
         f"{selector} is clipped at {viewport['width']}px: {box}"
 
 
+def _run_started(page: Page, err_sel: str) -> None:
+    """The run bar appears once POST /api/runs succeeded; otherwise surface the dashboard's own error text."""
+    try:
+        expect(page.locator("#runbar")).to_be_visible(timeout=20_000)
+    except AssertionError:
+        raise AssertionError(f"run did not start: {page.locator(err_sel).inner_text()!r}") from None
+
+
 def test_start_screen(page: Page, viewport: Viewport) -> None:
     require(CONTROL_PLANE + "/api/health", "control plane")
     page.goto(CONTROL_PLANE + "/")
@@ -36,9 +44,12 @@ def test_preset_sweep_end_to_end(page: Page, viewport: Viewport) -> None:
         pytest.skip("VULTR_INFERENCE_API_KEY not set in .env: a live sweep needs Vultr inference")
     page.goto(CONTROL_PLANE + "/")
     page.locator("#preset").click()
+    _run_started(page, "#site-err")
 
     approve = page.locator("#approve")
-    expect(approve).to_be_enabled(timeout=RUN_TIMEOUT_MS)
+    # #approve exists (and is enabled) before any approval is pending; it only becomes visible when Box 1 asks.
+    expect(approve).to_be_visible(timeout=RUN_TIMEOUT_MS)
+    expect(approve).to_be_enabled()
     _in_viewport(page, "#approve", viewport)
     _in_viewport(page, "#block", viewport)
     check(page, "vanilla dashboard", "approval gate", viewport)
@@ -77,6 +88,7 @@ def test_custom_url_sweep(page: Page, viewport: Viewport) -> None:
     _in_viewport(page, "#go", viewport)
     check(page, "vanilla dashboard", "how to test", viewport)
     page.locator("#go").click()
+    _run_started(page, "#how-err")
     verdict = page.locator("#verdict-big")
     expect(verdict).to_have_text("SHIP IT", timeout=RUN_TIMEOUT_MS)
     verdict.scroll_into_view_if_needed()

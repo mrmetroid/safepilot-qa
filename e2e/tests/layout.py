@@ -16,6 +16,7 @@ import base64
 import json
 import re
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, TypedDict
@@ -153,7 +154,9 @@ def check(page: Page, frontend: str, state: str, viewport: Viewport) -> Sample:
                     screenshot=png.name)
     if vision_enabled():
         b64 = base64.b64encode(png.read_bytes()).decode()
-        audit = asyncio.run(agents.audit_mobile(obs, b64, dict(viewport), None))
+        # Playwright's sync API already runs an event loop on this thread; give the async audit its own thread.
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            audit = pool.submit(asyncio.run, agents.audit_mobile(obs, b64, dict(viewport), None)).result()
         sample.vision_bugs = audit["bugs"]
         sample.vision_summary = audit.get("summary", "")
         sample.vision_source = audit.get("source", "dom-geometry")
