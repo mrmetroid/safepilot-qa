@@ -160,7 +160,7 @@ export default function App() {
             <path d="M11 16l4 4 7-8" stroke="var(--bg)" strokeWidth="3" fill="none" />
           </svg>
           <div>
-            <h1>SafePilot QA</h1>
+            <h1>Canary Swarm</h1>
             <p>Untrusted AI code deserves untrusted AI testers in disposable boxes.</p>
           </div>
         </div>

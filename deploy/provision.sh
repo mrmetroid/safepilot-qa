@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SafePilot QA bootstrap for the hackathon VM.
+# Canary Swarm: idempotent bootstrap for an Ubuntu 24.04 Vultr Cloud Compute VM (region sto).
 # Host: Vultr Cloud Compute, Shared CPU, Ubuntu 24.04, location Stockholm (region id sto).
 # Size: at least 4 vCPU and 8 GB. Plan families vc2, vhf, or vhp. Not VX1.
 # Vultr's Microsandbox guide needs /dev/kvm on a VX1 instance, and Stockholm has no VX1
@@ -77,7 +77,7 @@ grep -q '^DEMO_TARGET_SANDBOX_URL=' "$APP_DIR/.env" || echo "DEMO_TARGET_SANDBOX
 echo "==> systemd: control plane on 127.0.0.1:8000"
 cat > /etc/systemd/system/safepilot.service <<EOF
 [Unit]
-Description=SafePilot QA control plane
+Description=Canary Swarm control plane
 After=docker.service network-online.target
 Requires=docker.service
 

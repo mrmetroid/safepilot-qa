@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Canary Swarm developer CLI. Runs backend/app/cli.py with backend/requirements.txt via uv.
+#
+#   scripts/safepilot health
+#   scripts/safepilot sandbox verify
+#   scripts/safepilot run --preset          (needs the demo target: scripts/dev.sh starts it)
+#   scripts/safepilot run https://example.com
+#
+# The control plane reads the repo-root .env. Nothing from it reaches a sandbox.
+set -euo pipefail
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+export PYTHONPATH="$ROOT/backend${PYTHONPATH:+:$PYTHONPATH}"
+exec uv run --quiet --no-project --python 3.12 \
+  --with-requirements "$ROOT/backend/requirements.txt" \
+  python -m app.cli "$@"

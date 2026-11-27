@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Egress policy for SafePilot sandboxes. Idempotent; re-applied on every control-plane start
+# Egress policy for Canary Swarm sandboxes. Idempotent; re-applied on every control-plane start
 # (Docker recreates its chains on restart, so this is not a one-shot).
 set -euo pipefail
 SUBNET="${SANDBOX_SUBNET:-172.30.0.0/24}"

@@ -1,0 +1,49 @@
+{
+  "name": "Canary Swarm",
+  "version": "v3",
+  "theme": "light-editorial-flat",
+  "surfaces": {
+    "white": { "var": "--sp-white", "hex": "#FFFFFF", "role": "Primary page and dome background" },
+    "paper": { "var": "--sp-paper", "hex": "#F8F8F6", "role": "Cage body ground and subtle panels" },
+    "rule": { "var": "--sp-rule", "hex": "#E5E2DC", "role": "Hairline dividers and subtle borders" }
+  },
+  "ink": {
+    "primary": { "var": "--sp-ink", "hex": "#161412", "role": "Headlines, wordmark, primary copy" },
+    "soft": { "var": "--sp-ink-soft", "rgba": "rgba(22, 20, 18, 0.62)", "role": "Secondary labels and telemetry" },
+    "faint": { "var": "--sp-ink-faint", "rgba": "rgba(22, 20, 18, 0.42)", "role": "Tertiary metadata and timestamps" }
+  },
+  "brand_and_cage": {
+    "gold": { "var": "--sp-gold", "hex": "#C99A2E", "role": "Flat gold cage arches, frames, top rings, perch wires, primary CTA" },
+    "gold_2": { "var": "--sp-gold-2", "hex": "#D4A73A", "role": "Secondary gold highlights and completion bar" },
+    "canary_yellow": { "var": "--sp-yellow", "hex": "#F5D018", "role": "Canary body fill" },
+    "canary_highlight": { "var": "--sp-yellow-hi", "hex": "#FACC15", "role": "Canary wing and feather accent" },
+    "canary_belly": { "var": "--sp-yellow-belly", "hex": "#FDE68A", "role": "Soft flat canary belly tint" },
+    "canary_beak": { "var": "--sp-beak", "hex": "#E8943A", "role": "Canary beak" },
+    "perch_wood": { "var": "--sp-wood", "hex": "#9C6B3F", "role": "Hanging wooden perch base" },
+    "perch_wood_hi": { "var": "--sp-wood-hi", "hex": "#B5835A", "role": "Hanging wooden perch top edge" }
+  },
+  "semantic": {
+    "pass_green": {
+      "solid": { "var": "--sp-green", "hex": "#16A34A", "role": "Passing bars, SHIP IT stamp, healthy indicator" },
+      "button": { "var": "--sp-green-btn", "hex": "#15803D", "role": "Approve CTA fill" },
+      "text": { "var": "--sp-green-text", "hex": "#166534", "role": "Passed badge and status copy" },
+      "soft": { "var": "--sp-green-soft", "hex": "#ECFDF5", "role": "Passed badge and banner tint" }
+    },
+    "caution_amber": {
+      "solid": { "var": "--sp-amber", "hex": "#D97706", "role": "Awaiting approval / caution hold bar" },
+      "bright": { "var": "--sp-amber-2", "hex": "#F59E0B", "role": "Active warning accent" },
+      "text": { "var": "--sp-amber-text", "hex": "#92400E", "role": "Caution badge and approval prompt title" },
+      "soft": { "var": "--sp-amber-soft", "hex": "#FFFBEB", "role": "Approval card and caution tint" }
+    },
+    "fail_red": {
+      "solid": { "var": "--sp-red", "hex": "#DC2626", "role": "Fail / contained status, mobile bounding boxes, DO NOT SHIP stamp" },
+      "deep": { "var": "--sp-red-deep", "hex": "#E52521", "role": "High-emphasis alert fill" },
+      "text": { "var": "--sp-red-text", "hex": "#991B1B", "role": "Containment receipt header and error labels" },
+      "soft": { "var": "--sp-red-soft", "hex": "#FEF2F2", "role": "Containment receipt and failure tint" }
+    }
+  },
+  "typography": {
+    "sans": "\"Poppins\", ui-sans-serif, system-ui, sans-serif",
+    "mono": "\"IBM Plex Mono\", ui-monospace, \"SFMono-Regular\", monospace"
+  }
+}

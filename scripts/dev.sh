@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SafePilot QA local dev server.
+# Canary Swarm local dev server.
 #
 #   scripts/dev.sh              control plane with auto-reload on :8000 (serves the dashboard at /)
 #   scripts/dev.sh --react      also start the React dashboard (Vite) on :5173

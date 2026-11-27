@@ -218,6 +218,7 @@ class Sandbox:
             "secrets_exposed": exposed,
             "readonly_rootfs": hc.get("ReadonlyRootfs"),
             "memory_bytes": hc.get("Memory"),
+            "memory_swap_bytes": hc.get("MemorySwap"),
             "nano_cpus": hc.get("NanoCpus"),
             "pids_limit": hc.get("PidsLimit"),
             "cap_drop": hc.get("CapDrop"),
@@ -291,3 +292,15 @@ class Sandbox:
                     continue
         except Exception:  # noqa: BLE001
             pass
+
+
+def remove_run_sandboxes(run_id: str) -> int:
+    """Remove the sandboxes of one run only (other runs on this host are left alone)."""
+    removed = 0
+    for c in client().containers.list(all=True, filters={"label": f"safepilot.run={run_id}"}):
+        try:
+            c.remove(force=True)
+            removed += 1
+        except APIError:
+            pass
+    return removed

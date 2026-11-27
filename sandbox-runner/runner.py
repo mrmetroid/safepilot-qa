@@ -1,4 +1,4 @@
-"""SafePilot QA sandbox runner.
+"""Canary Swarm sandbox runner.
 
 Untrusted worker that lives inside a disposable, capped Docker container.
 

@@ -255,7 +255,7 @@ async def fix_prompt(target_url: str, verdict: str, box1: str, box2_bugs: list[d
                     return out
             except (InferenceError, InferenceDisabled) as exc:
                 log.warning("fix prompt on %s failed: %s", m, exc)
-    lines = [f"# Fix request: {target_url}", "", f"SafePilot QA verdict: **{verdict}**", "", "## Findings"]
+    lines = [f"# Fix request: {target_url}", "", f"Canary Swarm verdict: **{verdict}**", "", "## Findings"]
     lines.append(f"- Happy path (desktop): {box1}")
     for b in slim_bugs:
         lines.append(f"- [{b['severity']}] {b['title']}: {b['description']}")
@@ -271,4 +271,4 @@ async def fix_prompt(target_url: str, verdict: str, box1: str, box2_bugs: list[d
         "4. Add a Playwright regression test at a 390x844 viewport asserting the primary CTA is fully inside the viewport, "
         "and a test that applying a promo code returns within 2 seconds.",
     ]
-    return {"title": "SafePilot QA fix prompt", "verdict": verdict, "fix_prompt": "\n".join(lines), "source": "template"}
+    return {"title": "Canary Swarm fix prompt", "verdict": verdict, "fix_prompt": "\n".join(lines), "source": "template"}
