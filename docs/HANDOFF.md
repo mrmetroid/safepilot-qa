@@ -1,6 +1,6 @@
 # Handoff
 
-Status and assignments live in [`PLAN.md`](./PLAN.md). This file says where the work stands now and what is waiting on whom.
+[`PLAN.md`](./PLAN.md) is the source of truth for what will be implemented, with status and assignments. This file says where the work stands now and what is waiting on whom.
 
 ## Current Step
 

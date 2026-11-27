@@ -2,7 +2,13 @@
 
 Instructions for Cursor, Claude, GPT, or any other coding agent working in this repository.
 
-Read this file first. For the organizer's official brief (tracks, required stack, deliverables), see [`docs/HACKATHON_BRIEF.md`](./docs/HACKATHON_BRIEF.md). Then implement against [`BUILD_SPEC.md`](./BUILD_SPEC.md) without inventing requirements. If a detail is missing, add a clearly marked `TODO` and keep going. Do not silently change the architecture.
+Read this file first. For the organizer's official brief (tracks, required stack, deliverables), see [`docs/HACKATHON_BRIEF.md`](./docs/HACKATHON_BRIEF.md).
+
+**[`docs/PLAN.md`](./docs/PLAN.md) is the source of truth for what will be implemented**: the steps, their order, their owners and their status. Only work that is a step in `PLAN.md` gets implemented. To add work, add the step to `PLAN.md` first. [`docs/HANDOFF.md`](./docs/HANDOFF.md) says what is current and what is waiting on whom.
+
+Implement each step against [`BUILD_SPEC.md`](./BUILD_SPEC.md), which defines *how*: contracts, flags, prompts and copy. Do not invent requirements. If a detail is missing, add a clearly marked `TODO` and keep going. Do not silently change the architecture. The guardrails below override everything, including `PLAN.md`.
+
+When you finish or start a step, update its `status` and `note` in `PLAN.md` in the same commit. Refresh the plan page with the project-local `plan-dag` skill in [`.claude/skills/plan-dag`](./.claude/skills/plan-dag).
 
 ## Mission (10 lines)
 
@@ -33,7 +39,7 @@ Violate none of these. If a suggested change conflicts with this list, refuse th
 
 ## Recommended implementation order
 
-Do these steps in order. Do not start the dashboard before the sandbox and demo target exist. You will waste time mocking what you can already run.
+Do these steps in order. Do not start the dashboard before the sandbox and demo target exist. You will waste time mocking what you can already run. `docs/PLAN.md` tracks these steps, and any steps added since, with their current status.
 
 ### Step 1. `sandbox-runner` Docker image
 

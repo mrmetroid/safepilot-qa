@@ -1,6 +1,13 @@
 # SafePilot QA Implementation Plan
 
-This is the implementation plan from [`AGENTS.md`](../AGENTS.md) (Steps 1 to 5 and the verification checklist), [`BUILD_SPEC.md`](../BUILD_SPEC.md) Sections 8 and 9, and [`SUBMISSION_CHECKLIST.md`](../SUBMISSION_CHECKLIST.md), as one tracked list. The spec stays the source of truth for *what* to build. This file tracks *status* and *who owns what*. What is waiting right now is in [`HANDOFF.md`](./HANDOFF.md).
+**This file is the source of truth for what will be implemented**, in which order, by whom, and how far each step has got. It started from [`AGENTS.md`](../AGENTS.md) (Steps 1 to 5 and the verification checklist), [`BUILD_SPEC.md`](../BUILD_SPEC.md) Sections 8 and 9, and [`SUBMISSION_CHECKLIST.md`](../SUBMISSION_CHECKLIST.md). What is waiting right now is in [`HANDOFF.md`](./HANDOFF.md).
+
+## What this file decides
+
+- **Scope:** only the steps listed here get implemented. To build something new, add a step here first, in the same PR as the code or before it. Work that is not in this file does not get merged.
+- **Order and ownership:** phases run in the order below, and every step has an owner through `assignee`.
+- **What it does not decide:** *how* a step is built. [`BUILD_SPEC.md`](../BUILD_SPEC.md) keeps the contracts (Docker flags, prompts, API and WebSocket shapes, copy deck), and the [`AGENTS.md`](../AGENTS.md) guardrails stay non-negotiable. A step here can never override a guardrail.
+- **Conflicts:** if this file and the spec disagree about *what* to build, this file wins, and the spec is updated in the same PR.
 
 ## How to update this file
 
