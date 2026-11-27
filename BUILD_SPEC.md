@@ -239,6 +239,8 @@ If base64 screenshots make stdout huge, the runner may write files under `/tmp/s
 
 For action-by-action supervision (recommended): the control plane can restart a short-lived container per step, or keep one container alive and write the next action to a `/tmp/actions` fifo. Keeping one container per box for the run is faster. The control plane must still be able to inject a `hold_for_approval` command so Box 1 does not click submit early.
 
+Implemented protocol (additive): the container command is `python /app/runner.py -`. The control plane attaches to stdin before start, sends the job as the first JSON line, then sends one action object per line. The runner emits an additive `awaiting_action` event whenever it is idle. `done` or EOF ends the run. `hold_for_approval` is never forwarded to the runner: the control plane simply withholds the next action until the human decides.
+
 ### 3.6 Containment Receipt schema
 
 Emit this object as a `containment_triggered` WebSocket event and persist it on the run. Field names and enums are required:
@@ -776,6 +778,7 @@ safepilot-qa/
   backend/
     app/
       main.py              # FastAPI app factory, routes, websocket
+      cli.py               # Typer developer CLI (Section 10)
       api/
         health.py
         runs.py
@@ -791,7 +794,9 @@ safepilot-qa/
         fix_prompt.py
       models/
         schemas.py         # pydantic contracts from Sections 3, 4, 6
+    pyproject.toml       # uv project; `safepilot` console script
     requirements.txt
+    tests/
     Dockerfile
   sandbox-runner/
     Dockerfile
@@ -947,6 +952,27 @@ This is a same-day plan. Times are Europe/Stockholm (CET). If you start later, k
 | **18:45-19:00** | Buffer only. No new features. Hard cutoff: **19:00 CET**. |
 
 If time is slipping by 16:45, cut in this order: visual polish, custom-URL niceties, CPU meters that are not needed for containment, Node rewrites. Never cut: Docker isolation, inference on Vultr, Box 1 approval, Box 3 containment receipt, hosting the UI on the Vultr VM.
+
+---
+
+## Section 10. Developer CLI and optional MCP server
+
+Additive decision (27 November 2026). The control plane ships a Typer CLI, `safepilot`, so each piece can be exercised from a terminal as a developer tool. Install with `cd backend && uv sync`, then:
+
+| Command | What it does |
+| --- | --- |
+| `safepilot health [--json]` | Section 6.1 checks: Docker, sandbox image, Vultr Inference model list |
+| `safepilot sandbox build` | Builds `safepilot-sandbox:latest` from `sandbox-runner/` |
+| `safepilot sandbox verify` | Starts a throwaway sandbox with the Section 3.2 flags and runs the Section 8.4 checks (inspect plus env dump) |
+| `safepilot sandbox run URL --box box1 [--actions file.jsonl]` | Runs one box with scripted actions, saves screenshots under `run-output/`, kills and wipes the container, prints a Containment Receipt on timeout |
+| `safepilot sandbox sweep` | Removes leftover sandbox containers |
+
+Rules:
+
+- The CLI is a control plane, not a sandbox. It uses the same orchestrator code (`app/orch/docker_runner.py`) and never runs Playwright in-process.
+- Later commands (`run`, `approve`) must call the same HTTP contracts or orchestrator as the dashboard. Do not fork the logic.
+
+Optional MCP server (only after the core demo works): expose run, status, and report tools over the same orchestrator. **Do not expose the Box 1 approve action as an MCP tool.** An agent approving its own irreversible action defeats the human Approve-Before-Submit gate (guardrail 5). Approval stays with a human in the dashboard or an interactive CLI prompt.
 
 ---
 

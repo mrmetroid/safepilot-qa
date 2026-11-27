@@ -59,6 +59,10 @@ Serve a high-contrast UI from the Vultr VM: URL bar, **Load Adversarial Test App
 
 Provision Ubuntu 24.04 Cloud Compute in `sto`, install Docker, build the sandbox image, put Caddy in front, open 22/80/443, and run the Section 8 verification checklist. Record the demo video only after a live Containment Moment has been seen on the public URL.
 
+## Developer CLI
+
+A Typer CLI (`safepilot`, in `backend/app/cli.py`) wraps the control plane for local testing, and is the base for an optional MCP server. See BUILD_SPEC Section 10. It follows every guardrail above; in particular it never runs Playwright in-process, and approve is never exposed to an MCP client.
+
 ## Coding conventions
 
 - Prefer clear names and small modules over cleverness. This is a same-day hackathon build.
