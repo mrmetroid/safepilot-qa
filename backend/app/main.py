@@ -7,6 +7,7 @@ import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Literal
+from urllib.parse import urlsplit
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, JSONResponse, Response
@@ -145,6 +146,20 @@ async def create_run(req: RunRequest) -> dict:
         "settings": run.cfg.public(),
         "ws_url": f"/ws/runs/{run.run_id}",
     }
+
+
+class TargetCheck(BaseModel):
+    url: str = Field(max_length=2000)
+
+
+@app.post("/api/targets/check")
+async def check_target(req: TargetCheck) -> dict:
+    """Step 1 of the dashboard flow: normalize and vet a URL before the user picks a test plan."""
+    url = req.url.strip()
+    if "://" not in url:
+        url = "https://" + url
+    reason = await asyncio.to_thread(policy.validate_public_url, url)
+    return {"ok": reason is None, "url": url, "host": urlsplit(url).hostname, "reason": f"URL rejected: {reason}" if reason else None}
 
 
 @app.get("/api/settings/options")

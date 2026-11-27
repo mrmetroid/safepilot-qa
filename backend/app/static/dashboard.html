@@ -70,7 +70,35 @@
   .deploy .sum { font-size: 15px; flex: 1 1 300px; }
   .deploy .sum b { color: var(--accent); }
   .btn-deploy { background: var(--accent); color: #03201d; font-size: 18px; padding: 14px 24px; }
-  .target-mode { font: 12px var(--mono); color: var(--warn); margin-top: 8px; }
+  .stepper { list-style: none; display: flex; gap: 6px; padding: 0; margin: 0 0 18px; flex-wrap: wrap; counter-reset: st; }
+  .stepper li { counter-increment: st; display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 14px; padding: 6px 12px 6px 6px; border-radius: 999px; background: var(--panel); border: 1px solid var(--line); }
+  .stepper li::before { content: counter(st); display: inline-flex; width: 22px; height: 22px; border-radius: 50%; align-items: center; justify-content: center; background: var(--panel2); font: 700 12px var(--mono); }
+  .stepper li.done { color: var(--text); } .stepper li.done::before { content: "\2713"; background: #12361f; color: var(--ok); }
+  .stepper li.on { color: #03201d; background: var(--accent); border-color: var(--accent); font-weight: 700; } .stepper li.on::before { background: #03201d; color: var(--accent); }
+  .screen { max-width: 980px; margin: 0 auto; }
+  .screen[hidden], [hidden] { display: none !important; }
+  .q { font-size: 30px; margin: 18px 0 6px; line-height: 1.2; }
+  .q span { color: var(--accent); word-break: break-all; }
+  .sub { color: var(--muted); margin: 0 0 18px; }
+  .bar.big input { font-size: 20px; padding: 16px 18px; }
+  .bar.big button { font-size: 18px; padding: 14px 26px; }
+  .err { color: var(--bad); font-weight: 600; margin-top: 10px; min-height: 1em; }
+  .or { display: flex; align-items: center; gap: 12px; color: var(--muted); margin: 26px 0 16px; font-size: 13px; }
+  .or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+  .modes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); gap: 12px; }
+  .mode { text-align: left; background: var(--panel); color: var(--text); border: 2px solid var(--line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 6px; font-weight: 400; }
+  .mode b { font-size: 17px; }
+  .mode span { color: var(--muted); font-size: 14px; }
+  .mode em { font: 12px var(--mono); color: var(--accent); font-style: normal; margin-top: auto; padding-top: 6px; }
+  .mode:hover { border-color: #3a4552; }
+  .mode.sel { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+  .block { margin-top: 18px; }
+  details.adv { margin-top: 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px 16px; }
+  details.adv summary { cursor: pointer; font-weight: 700; }
+  details.adv[open] summary { margin-bottom: 12px; }
+  .row-actions { display: flex; gap: 10px; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-top: 18px; }
+  .runbar { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+  .runbar .runmeta { margin-top: 0; flex: 1 1 300px; }
   .agentres { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 4px; }
   .agentres th, .agentres td { text-align: left; padding: 7px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
   .agentres th { color: var(--muted); font-weight: 600; font-size: 12px; }
@@ -147,47 +175,65 @@
   <div class="pills" id="pills"><span class="pill">checking health...</span></div>
 </header>
 <main>
-  <section class="panel">
-    <h2 class="step-h"><span class="n">1</span> Target</h2>
-    <div class="bar">
-      <input id="url" type="url" placeholder="Paste a public preview URL, e.g. https://my-app.vercel.app" autocomplete="off">
-      <button class="btn-preset" id="preset">Load Adversarial Test App (Demo Preset)</button>
+  <ol class="stepper" id="stepper">
+    <li data-s="1">Site</li><li data-s="2">How to test</li><li data-s="3">Agents running</li><li data-s="4">Results</li>
+  </ol>
+
+  <section class="screen" id="screen-site">
+    <h2 class="q">Which site should we test?</h2>
+    <p class="sub">Paste a public preview or production URL. Nothing is deployed until you choose how to test it.</p>
+    <div class="bar big">
+      <input id="url" type="url" placeholder="https://my-app.vercel.app" autocomplete="off">
+      <button class="btn-primary" id="next">Next</button>
     </div>
-    <p class="hint">Public http(s) URLs only. Login walls and bot blockers may make an agent fail honestly. The demo preset runs the fixed 3-box demo swarm (Happy Path with human Approve, Mobile Vision, Chaos Gremlin) against the built-in adversarial shop.</p>
-    <div class="target-mode" id="target-mode"></div>
+    <div class="err" id="site-err"></div>
+    <p class="hint">Public http(s) URLs only. Login walls and bot blockers may make an agent fail honestly.</p>
+    <div class="or">or try the built-in demo</div>
+    <button class="btn-preset" id="preset">Load Adversarial Test App (Demo Preset)</button>
+    <p class="hint">Runs the fixed 3-box demo swarm (Happy Path with human Approve, Mobile Vision Check, Chaos Gremlin) against a hostile demo shop. Starts right away.</p>
   </section>
 
-  <div class="setup" id="setup">
-    <section class="panel">
-      <h2 class="step-h"><span class="n">2</span> Agents</h2>
-      <div class="presets">
-        <button data-preset="standard">Standard sweep</button>
-        <button data-preset="devices">Responsive (desktop, tablet, mobile)</button>
-        <button data-preset="security">Security (2 chaos agents)</button>
-      </div>
+  <section class="screen" id="screen-how" hidden>
+    <h2 class="q">How do you want to test <span id="how-host"></span>?</h2>
+    <p class="sub">Pick a test plan. Every agent runs in its own disposable, capped sandbox on the Vultr VM.</p>
+    <div class="modes" id="modes">
+      <button class="mode" data-mode="standard"><b>Quick sweep</b><span>Mobile and desktop visual check plus an adversarial explorer.</span><em>3 agents</em></button>
+      <button class="mode" data-mode="devices"><b>Responsive layout</b><span>Vision check on desktop, tablet and phone. Finds clipped and overflowing UI.</span><em>3 agents</em></button>
+      <button class="mode" data-mode="security"><b>Security and robustness</b><span>Chaos agents poke forms, promo codes and hidden controls. Hostile pages get contained.</span><em>2 agents</em></button>
+      <button class="mode" data-mode="custom"><b>Custom</b><span>Choose each agent and device yourself.</span><em>1 to 6 agents</em></button>
+    </div>
+
+    <div class="panel block" id="custom-box" hidden>
+      <h3 style="margin:0 0 10px">Your agents</h3>
       <div class="agents" id="agents"></div>
       <button class="btn-add" id="add-agent">+ Add agent</button>
       <p class="hint" id="agent-hint"></p>
-    </section>
-    <section class="panel">
-      <h2 class="step-h"><span class="n">3</span> Settings</h2>
-      <div class="field"><label for="focus">Focus for this run (optional)</label>
-        <textarea id="focus" maxlength="400" placeholder="e.g. Focus on the pricing page and the signup form. Try odd inputs in the search field."></textarea></div>
+    </div>
+
+    <div class="field block"><label for="focus">Anything specific to look at? (optional)</label>
+      <textarea id="focus" maxlength="400" placeholder="e.g. Focus on the pricing page and the signup form. Try odd inputs in the search field."></textarea></div>
+
+    <details class="adv">
+      <summary>Advanced settings</summary>
       <div class="field"><label for="model">Model on Vultr Serverless Inference</label><select id="model"></select></div>
       <div class="field"><label>Step budget per agent</label>
         <div class="rng"><input type="range" id="steps" min="3" max="20" value="14"><span class="val" id="steps-v">14</span></div></div>
       <div class="field"><label>Wall-clock cap per agent (seconds)</label>
         <div class="rng"><input type="range" id="timeout" min="45" max="60" step="5" value="60"><span class="val" id="timeout-v">60s</span></div></div>
       <div class="locked" id="locked"></div>
-    </section>
-  </div>
+    </details>
 
-  <div class="deploy" id="deploy-bar">
-    <div class="sum" id="deploy-sum"></div>
-    <div><button class="btn-ghost" id="edit" style="display:none">New run</button>
-      <button class="btn-deploy" id="go">Deploy agents</button></div>
+    <div class="deploy">
+      <div class="sum" id="deploy-sum"></div>
+      <div><button class="btn-ghost" id="back">Back</button> <button class="btn-deploy" id="go">Deploy agents</button></div>
+    </div>
+    <div class="err" id="how-err"></div>
+  </section>
+
+  <div class="runbar" id="runbar" hidden>
+    <div class="runmeta" id="runmeta"></div>
+    <button class="btn-ghost" id="edit">Test another site</button>
   </div>
-  <div class="runmeta" id="runmeta"></div>
 
 <div id="approval">
     <div class="txt"><b id="approval-title">An agent wants to perform an irreversible action.</b><br><span id="approval-detail"></span></div>
@@ -258,7 +304,8 @@ const PRESETS = {
 };
 let MAX_AGENTS = 6;
 let agents = PRESETS.standard.map(([persona, device]) => ({ persona, device }));
-let target = { mode: 'custom' };
+let mode = 'standard';
+let target = { mode: 'custom', url: null };
 
 const $ = (s, el = document) => el.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -293,10 +340,28 @@ function renderAgents() {
 
 function renderSummary() {
   const n = agents.length;
-  const where = target.mode === 'adversarial_preset' ? 'the built-in adversarial demo shop' : ($('#url').value.trim() || 'your target URL');
-  const count = target.mode === 'adversarial_preset' ? 3 : n;
-  $('#deploy-sum').innerHTML = `Deploy <b>${count} agent${count === 1 ? '' : 's'}</b> in isolated sandboxes on Vultr Stockholm against <b>${esc(where)}</b>`;
-  $('#target-mode').textContent = target.mode === 'adversarial_preset' ? 'Target: built-in Adversarial Test App (demo preset). Type a URL to switch back.' : '';
+  const list = agents.map(a => `${PERSONAS[a.persona].name} (${a.device})`).join(', ');
+  $('#deploy-sum').innerHTML = `Deploy <b>${n} agent${n === 1 ? '' : 's'}</b> on Vultr Stockholm: <span style="color:var(--muted)">${esc(list)}</span>`;
+}
+
+function setMode(m) {
+  mode = m;
+  if (m !== 'custom') agents = PRESETS[m].map(([persona, device]) => ({ persona, device }));
+  document.querySelectorAll('.mode').forEach(b => b.classList.toggle('sel', b.dataset.mode === m));
+  $('#custom-box').hidden = m !== 'custom';
+  renderAgents();
+}
+
+// 1 site, 2 how to test, 3 running, 4 results
+function showStep(n) {
+  $('#screen-site').hidden = n !== 1;
+  $('#screen-how').hidden = n !== 2;
+  $('#runbar').hidden = n < 3;
+  $('#edit').style.display = n === 4 ? '' : 'none';
+  document.querySelectorAll('#stepper li').forEach(li => {
+    const k = +li.dataset.s; li.classList.toggle('on', k === n); li.classList.toggle('done', k < n);
+  });
+  if (n === 1) setTimeout(() => $('#url').focus(), 0);
 }
 
 function collectSettings() {
@@ -310,13 +375,6 @@ function collectSettings() {
   };
 }
 
-function setSetupLocked(locked) {
-  $('#setup').classList.toggle('collapsed', locked);
-  $('#go').style.display = locked ? 'none' : '';
-  $('#edit').style.display = 'none'; // shown as "New run" once the verdict is in
-  $('#preset').disabled = locked;
-  $('#url').disabled = locked;
-}
 
 async function loadOptions() {
   try {
@@ -489,8 +547,7 @@ function showVerdict(ev) {
   ann.className = 'shot ' + (vp.width && vp.width < 600 ? 'mobile' : vp.width && vp.width < 1000 ? 'tablet' : '');
   ann.innerHTML = s ? `<img src="${s.src}">${bboxHtml(bugs, s.w, s.h)}` : '<div class="empty">No vision check in this run.</div>';
   $('#buglist').innerHTML = allBugs.length ? allBugs.map(b => `<li><span class="sev ${esc(b.severity)}">${esc(b.severity)}</span><b>${esc(b.title)}</b>${b.viewport ? ' <span class="src">@' + esc(b.viewport) + '</span>' : ''}<br><span style="color:var(--muted)">${esc(b.description)}</span> <span class="src">[${esc(b.source || '')}]</span></li>`).join('') : '<li>No visual bugs reported.</li>';
-  $('#edit').textContent = 'New run';
-  $('#edit').style.display = '';
+  showStep(4);
 }
 
 function handle(ev) {
@@ -528,7 +585,7 @@ async function applySnapshot(run) {
   state = run;
   const ids = Object.keys(run.boxes);
   if (BOXES.length !== ids.length || !ids.every(id => card(id))) { BOXES = boxesFromRun(run); cards(); }
-  setSetupLocked(true);
+  showStep(run.verdict ? 4 : 3);
   const st = run.settings || {};
   $('#runmeta').textContent = `run ${run.run_id} | target ${run.url} | model ${st.model || run.inference_model || '?'} | ${ids.length} agent(s), ${st.max_steps ?? '?'} steps, ${st.timeout_seconds ?? '?'}s cap` + (st.focus ? ` | focus: ${st.focus}` : '');
   for (const [id, bx] of Object.entries(run.boxes)) {
@@ -561,6 +618,7 @@ function connect(id) {
 
 async function start(body) {
   $('#go').disabled = $('#preset').disabled = true;
+  $('#how-err').textContent = $('#site-err').textContent = '';
   $('#verdict').className = ''; $('#results').classList.remove('show'); $('#copied').textContent = '';
   for (const k of Object.keys(pendingApprovals)) delete pendingApprovals[k];
   renderApproval();
@@ -569,12 +627,15 @@ async function start(body) {
   const j = await r.json();
   $('#go').disabled = $('#preset').disabled = false;
   if (!r.ok) {
-    const d = j.detail; alert(Array.isArray(d) ? d.map(x => `${(x.loc || []).slice(-1)[0]}: ${x.msg}`).join('\n') : (d || 'Could not start run'));
+    const d = j.detail;
+    const msg = Array.isArray(d) ? d.map(x => `${(x.loc || []).slice(-1)[0]}: ${x.msg}`).join('; ') : (d || 'Could not start run');
+    $(body.mode === 'adversarial_preset' ? '#site-err' : '#how-err').textContent = msg;
     return;
   }
   BOXES = j.boxes.map(b => ({ id: b.box_id, name: b.name, persona: b.persona, viewport: b.viewport }));
   cards();
-  setSetupLocked(true);
+  showStep(3);
+  $('#runmeta').textContent = `target ${j.url} | ${BOXES.length} agent(s) deploying...`;
   state = { run_id: j.run_id };
   BOXES.forEach(b => { setStatus(b.id, 'starting'); log(b.id, 'sys', 'deploying disposable sandbox on the Vultr VM...'); });
   connect(j.run_id);
@@ -592,19 +653,30 @@ async function health() {
   } catch { $('#pills').innerHTML = '<span class="pill bad">control plane unreachable</span>'; }
 }
 
-$('#go').onclick = () => {
-  if (target.mode === 'adversarial_preset') return start({ mode: 'adversarial_preset' });
-  const u = $('#url').value.trim();
-  if (!u) { $('#url').focus(); return; }
-  start({ mode: 'custom', url: u });
-};
-$('#url').oninput = () => { target = { mode: 'custom' }; renderSummary(); };
-$('#url').onkeydown = (e) => { if (e.key === 'Enter') $('#go').click(); };
-// Demo preset: target the built-in adversarial shop and deploy right away with the current setup
-// (the default setup is the classic 3-agent swarm).
-$('#preset').onclick = () => { target = { mode: 'adversarial_preset' }; $('#url').value = ''; renderSummary(); start({ mode: 'adversarial_preset' }); };
+async function next() {
+  const raw = $('#url').value.trim();
+  $('#site-err').textContent = '';
+  if (!raw) { $('#url').focus(); return; }
+  $('#next').disabled = true;
+  try {
+    const r = await fetch('/api/targets/check', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: raw }) });
+    const j = await r.json();
+    if (!j.ok) { $('#site-err').textContent = j.reason || 'This URL cannot be tested.'; return; }
+    target = { mode: 'custom', url: j.url };
+    $('#url').value = j.url;
+    $('#how-host').textContent = j.host || j.url;
+    showStep(2);
+  } catch { $('#site-err').textContent = 'Control plane unreachable.'; }
+  finally { $('#next').disabled = false; }
+}
+$('#next').onclick = next;
+$('#url').onkeydown = (e) => { if (e.key === 'Enter') next(); };
+$('#back').onclick = () => showStep(1);
+$('#go').onclick = () => { if (target.url) start({ mode: 'custom', url: target.url }); };
+document.querySelectorAll('.mode').forEach(b => b.onclick = () => setMode(b.dataset.mode));
+// Demo preset: the fixed 3-box demo swarm against the built-in adversarial shop, deployed right away.
+$('#preset').onclick = () => { target = { mode: 'adversarial_preset', url: null }; start({ mode: 'adversarial_preset' }); };
 $('#add-agent').onclick = () => { if (agents.length < MAX_AGENTS) { agents.push({ persona: 'mobile_vision', device: 'tablet' }); renderAgents(); } };
-document.querySelectorAll('[data-preset]').forEach(b => b.onclick = () => { agents = PRESETS[b.dataset.preset].map(([persona, device]) => ({ persona, device })); renderAgents(); });
 $('#steps').oninput = (e) => { $('#steps-v').textContent = e.target.value; };
 $('#timeout').oninput = (e) => { $('#timeout-v').textContent = e.target.value + 's'; };
 $('#edit').onclick = () => {
@@ -613,7 +685,7 @@ $('#edit').onclick = () => {
   $('#verdict').className = ''; $('#results').classList.remove('show'); $('#runmeta').textContent = '';
   for (const k of Object.keys(pendingApprovals)) delete pendingApprovals[k];
   renderApproval();
-  BOXES = []; cards(); setSetupLocked(false);
+  BOXES = []; cards(); showStep(1);
 };
 $('#approve').onclick = () => decide('approve');
 $('#block').onclick = () => decide('block');
@@ -624,8 +696,9 @@ $('#copy').onclick = async () => {
   $('#copied').innerHTML = '<span class="copied">Copied</span>';
 };
 
-renderAgents(); loadOptions(); health(); setInterval(health, 30000);
-const m = location.hash.match(/run=([0-9a-f-]+)/); if (m) connect(m[1]);
+setMode('standard'); loadOptions(); health(); setInterval(health, 30000);
+const m = location.hash.match(/run=([0-9a-f-]+)/);
+if (m) { showStep(3); connect(m[1]); } else showStep(1);
 </script>
 </body>
 </html>
