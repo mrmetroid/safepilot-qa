@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SafePilot QA: idempotent bootstrap for an Ubuntu 24.04 Vultr Cloud Compute VM (region sto).
+# Canary Swarm: idempotent bootstrap for an Ubuntu 24.04 Vultr Cloud Compute VM (region sto).
 # Run as root on the VM from the repo checkout: sudo bash deploy/provision.sh
 # Optional env: SITE_ADDRESS (e.g. 1-2-3-4.sslip.io for automatic HTTPS; default ":80")
 set -euo pipefail
@@ -60,7 +60,7 @@ grep -q '^DEMO_TARGET_SANDBOX_URL=' "$APP_DIR/.env" || echo "DEMO_TARGET_SANDBOX
 echo "==> systemd: control plane on 127.0.0.1:8000"
 cat > /etc/systemd/system/safepilot.service <<EOF
 [Unit]
-Description=SafePilot QA control plane
+Description=Canary Swarm control plane
 After=docker.service network-online.target
 Requires=docker.service
 

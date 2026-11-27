@@ -1,4 +1,4 @@
-# SafePilot QA sandbox runner.
+# Canary Swarm sandbox runner.
 # Untrusted worker: drives Chromium via Playwright, holds ZERO secrets.
 # Started only by the control plane with the BUILD_SPEC Section 3 flags.
 FROM mcr.microsoft.com/playwright/python:v1.49.0-jammy

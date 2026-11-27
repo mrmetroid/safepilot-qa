@@ -58,7 +58,7 @@ Fill every required field. Attach the project to this event.
 
 | Field | What to enter |
 | --- | --- |
-| Project Name | SafePilot QA |
+| Project Name | Canary Swarm |
 | Short Description | Untrusted AI code deserves untrusted AI testers in disposable boxes. Three isolated Playwright sandboxes on a Vultr Stockholm VM crash-test a preview, vision-check mobile UI, and emit a SHIP IT or DO NOT SHIP verdict. |
 | Architecture screenshots / diagrams | Upload the architecture diagram from the README (rendered mermaid or equivalent screenshot). Add a dashboard screenshot that shows all three boxes and a Containment Receipt if you have one. |
 | Tag | Must include `Hackathons` |

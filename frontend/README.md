@@ -1,4 +1,4 @@
-# SafePilot QA dashboard
+# Canary Swarm dashboard
 
 Vite + React + TypeScript. Talks to the control plane only through the Section 6 contract in `../BUILD_SPEC.md`:
 `GET /api/health`, `POST /api/runs`, `WS /ws/runs/{run_id}`, `GET /api/runs/{run_id}`, `POST /api/runs/{run_id}/boxes/{box_id}/approve`.

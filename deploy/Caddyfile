@@ -1,4 +1,4 @@
-# SafePilot QA on the Vultr VM. provision.sh substitutes SITE_ADDRESS
+# Canary Swarm on the Vultr VM. provision.sh substitutes SITE_ADDRESS
 # (":80" for plain HTTP on the raw IP, or "<ip-with-dashes>.sslip.io" for automatic HTTPS).
 {$SITE_ADDRESS::80} {
 	encode gzip

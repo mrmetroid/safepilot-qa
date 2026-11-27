@@ -635,7 +635,7 @@ async def _finalize(run: Run) -> None:
 
 def json_receipt(box: BoxState) -> str:
     r = box.containment_receipt or {}
-    return (f"Contained by SafePilot ({r.get('trigger_reason')}) after {r.get('elapsed_ms')} ms, peak CPU {r.get('peak_cpu_pct')}%, "
+    return (f"Contained by Canary Swarm ({r.get('trigger_reason')}) after {r.get('elapsed_ms')} ms, peak CPU {r.get('peak_cpu_pct')}%, "
             f"peak mem {r.get('peak_mem_mb')} MB. Notes: {r.get('notes')}")
 
 
