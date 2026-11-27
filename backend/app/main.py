@@ -13,7 +13,7 @@ from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, JSONResponse, Response
 from pydantic import BaseModel, Field
 
-from .config import REPO_ROOT, settings
+from .config import settings
 from .inference import client as inference
 from .orch import docker_runner, policy
 from .orch import run_manager as rm

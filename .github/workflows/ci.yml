@@ -1,0 +1,49 @@
+# All CI logic lives in the ci/ uv project. This file only provisions tools and calls
+# the same CLI you run locally:  uv run --project ci safepilot-ci run
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  checks:
+    name: lint, test, frontend
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: |
+            ci/uv.lock
+            backend/requirements.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: safepilot-ci run lint test frontend
+        run: uv run --locked --project ci safepilot-ci run lint test frontend
+
+  images:
+    name: docker images and sandbox isolation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: ci/uv.lock
+      - name: safepilot-ci run images
+        run: uv run --locked --project ci safepilot-ci run images

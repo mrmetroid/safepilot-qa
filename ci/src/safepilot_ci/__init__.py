@@ -1,0 +1,1 @@
+"""SafePilot QA CI pipeline."""
