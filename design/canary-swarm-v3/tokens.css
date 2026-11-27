@@ -1,0 +1,66 @@
+/* Canary Swarm tokens v3. Flat, white, semantic. No em-dashes. */
+:root {
+  --sp-white: #FFFFFF;
+  --sp-paper: #F8F8F6;
+  --sp-ink: #161412;
+  --sp-ink-soft: rgba(22, 20, 18, 0.62);
+  --sp-ink-faint: rgba(22, 20, 18, 0.42);
+  --sp-rule: #E5E2DC;
+
+  --sp-yellow: #F5D018;
+  --sp-yellow-hi: #FACC15;
+  --sp-yellow-belly: #FDE68A;
+  --sp-beak: #E8943A;
+
+  --sp-gold: #C99A2E;
+  --sp-gold-2: #D4A73A;
+
+  --sp-wood: #9C6B3F;
+  --sp-wood-hi: #B5835A;
+
+  --sp-green: #16A34A;
+  --sp-green-btn: #15803D;
+  --sp-green-text: #166534;
+  --sp-green-soft: #ECFDF5;
+
+  --sp-amber: #D97706;
+  --sp-amber-2: #F59E0B;
+  --sp-amber-text: #92400E;
+  --sp-amber-soft: #FFFBEB;
+
+  --sp-red: #DC2626;
+  --sp-red-deep: #E52521;
+  --sp-red-text: #991B1B;
+  --sp-red-soft: #FEF2F2;
+
+  --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
+
+  --lh-display: 0.92;
+  --lh-head: 1;
+  --lh-body: 1.45;
+  --lh-tight: 1.2;
+  --ls-label: 0.12em;
+  --ls-mono: 0.01em;
+
+  --hair: 1px;
+  --rule: 2px;
+  --ease-out: cubic-bezier(0.2, 0.7, 0.1, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-1: 120ms;
+  --dur-2: 240ms;
+
+  --header-h: 3.35rem;
+  --pillars-h: 1.55rem;
+  --footer-h: 5.35rem;
+  --gutter: clamp(0.7rem, 1.1vw, 1.15rem);
+  --cage-gap: clamp(0.5rem, 0.85vw, 0.8rem);
+}
+
+@media (max-width: 1360px), (max-height: 840px) {
+  :root {
+    --header-h: 3.05rem;
+    --pillars-h: 1.4rem;
+    --footer-h: 4.85rem;
+  }
+}
