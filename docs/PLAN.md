@@ -1,4 +1,4 @@
-# SafePilot QA Implementation Plan
+# Canary Swarm Implementation Plan
 
 **This file is the source of truth for what will be implemented**, in which order, by whom, and how far each step has got. It started from [`AGENTS.md`](../AGENTS.md) (Steps 1 to 5 and the verification checklist), [`BUILD_SPEC.md`](../BUILD_SPEC.md) Sections 8 and 9, and [`SUBMISSION_CHECKLIST.md`](../SUBMISSION_CHECKLIST.md). What is waiting right now is in [`HANDOFF.md`](./HANDOFF.md).
 

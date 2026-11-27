@@ -13,12 +13,12 @@ class RepoNotFound(Exception):
 
 
 def find_repo_root(start: Path) -> Path:
-    """Walk up from `start` to the directory that holds the SafePilot QA spec files."""
+    """Walk up from `start` to the directory that holds the Canary Swarm spec files."""
     start = start.resolve()
     for candidate in (start, *start.parents):
         if all((candidate / marker).is_file() for marker in ROOT_MARKERS):
             return candidate
-    raise RepoNotFound(f"no SafePilot QA repo root above {start}")
+    raise RepoNotFound(f"no Canary Swarm repo root above {start}")
 
 
 @dataclass(frozen=True)
