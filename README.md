@@ -85,14 +85,13 @@ cd safepilot-qa
 cp .env.example .env
 # Edit .env and set VULTR_INFERENCE_API_KEY. Never put that key in a container.
 
-# 2. Build the sandbox runner image (no secrets in the build args or image)
-docker build -t safepilot-sandbox:latest ./sandbox-runner
+# 2. Local dev: builds the images if missing, starts the demo target on :8081,
+#    and runs the control plane with auto-reload on :8000 (dashboard at /)
+scripts/dev.sh            # add --react for the Vite dashboard on :5173, --rebuild to rebuild images
 
-# 3. Start the control plane, dashboard, and built-in demo target
-#    (exact compose file lands in deploy/ during the build; see BUILD_SPEC.md Section 8)
-docker compose -f deploy/docker-compose.yml up --build
+#    On the Vultr VM use deploy/deploy.sh root@<vm-ip> instead (Caddy + systemd).
 
-# 4. Open the dashboard, click "Load Adversarial Test App (Demo Preset)",
+# 3. Open the dashboard, click "Load Adversarial Test App (Demo Preset)",
 #    approve Box 1's checkout, and watch Box 3 produce a Containment Receipt.
 ```
 

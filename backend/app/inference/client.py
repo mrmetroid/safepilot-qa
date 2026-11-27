@@ -69,15 +69,21 @@ def _strip_fence(text: str) -> str:
     return text
 
 
-async def _chat(messages: list[dict[str, Any]], max_tokens: int) -> str:
+ALLOWED_MODELS = (settings.inference_model, settings.inference_fallback_model)
+
+
+async def _chat(messages: list[dict[str, Any]], max_tokens: int, model: str | None = None) -> str:
+    """model: per-run choice from the run settings. None uses the process-wide active model."""
     global _active_model
     client = _get_client()
+    pinned = model if model in ALLOWED_MODELS else None
+    use = pinned or _active_model
     delay = 0.5
     last_exc: Exception | None = None
     for attempt in range(settings.inference_max_retries):
         try:
             resp = await client.chat.completions.create(
-                model=_active_model,
+                model=use,
                 messages=messages,
                 max_tokens=max_tokens,
                 temperature=0.2,
@@ -89,9 +95,11 @@ async def _chat(messages: list[dict[str, Any]], max_tokens: int) -> str:
         except APIStatusError as exc:
             last_exc = exc
             body = str(exc.message).lower()
-            if exc.status_code in (400, 404) and "model" in body and _active_model != settings.inference_fallback_model:
-                log.warning("model %s unavailable, falling back to %s", _active_model, settings.inference_fallback_model)
-                _active_model = settings.inference_fallback_model
+            if exc.status_code in (400, 404) and "model" in body and use != settings.inference_fallback_model:
+                log.warning("model %s unavailable, falling back to %s", use, settings.inference_fallback_model)
+                if pinned is None:
+                    _active_model = settings.inference_fallback_model
+                use = settings.inference_fallback_model
                 continue
             if exc.status_code not in RETRY_STATUS:
                 raise InferenceError(f"HTTP {exc.status_code}: {exc.message[:200]}") from exc
@@ -103,7 +111,7 @@ async def _chat(messages: list[dict[str, Any]], max_tokens: int) -> str:
 
 
 async def chat_json(system: str, user_text: str, image_b64: str | None = None,
-                    image_type: str = "image/jpeg", max_tokens: int = 700) -> dict[str, Any]:
+                    image_type: str = "image/jpeg", max_tokens: int = 700, model: str | None = None) -> dict[str, Any]:
     """Call the model and strictly parse one JSON object, with one repair retry."""
     content: Any = user_text
     if image_b64:
@@ -112,7 +120,7 @@ async def chat_json(system: str, user_text: str, image_b64: str | None = None,
             {"type": "image_url", "image_url": {"url": f"data:{image_type};base64,{image_b64}"}},
         ]
     messages = [{"role": "system", "content": system}, {"role": "user", "content": content}]
-    raw = await _chat(messages, max_tokens)
+    raw = await _chat(messages, max_tokens, model)
     try:
         return json.loads(_strip_fence(raw))
     except json.JSONDecodeError:
@@ -120,7 +128,7 @@ async def chat_json(system: str, user_text: str, image_b64: str | None = None,
             {"role": "assistant", "content": raw[:2000]},
             {"role": "user", "content": "That was not valid JSON. Return ONLY the JSON object, no prose, no markdown."},
         ]
-        raw2 = await _chat(repair, max_tokens)
+        raw2 = await _chat(repair, max_tokens, model)
         try:
             return json.loads(_strip_fence(raw2))
         except json.JSONDecodeError as exc:

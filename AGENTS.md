@@ -67,6 +67,7 @@ Provision Ubuntu 24.04 Cloud Compute in `sto`, install Docker, build the sandbox
 - Structured logs on the control plane (`run_id`, `box_id`, event type). Raw Playwright debug stays inside the container log stream.
 - No em-dashes in user-facing copy. Verdict strings are exactly `DO NOT SHIP` and `SHIP IT`.
 - Commit in small, reviewable chunks: runner, demo-target, control plane, frontend, deploy.
+- Always commit everything. When you finish a change, commit all modified and new files right away without asking. Never leave work uncommitted. Never commit secrets (`.env`, keys); `.gitignore` covers them.
 
 ## Verification checklist (do not call the build "done" until all of these pass)
 

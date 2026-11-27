@@ -55,7 +55,7 @@ GOALS = {
         "form. Stop and request human approval before the final irreversible submit."
     ),
     "mobile_vision": (
-        "Open the landing and cart or checkout screens at a 390x844 mobile viewport. Prepare a clean screenshot of "
+        "Open the landing and cart or checkout screens at the configured device viewport. Prepare a clean screenshot of "
         "the most visually broken state you can find, especially clipped or overflowing calls to action. Do not submit payment."
     ),
     "chaos_gremlin": (
@@ -65,17 +65,18 @@ GOALS = {
 }
 
 VISION_SYSTEM = """You are a mobile UI vision auditor for SafePilot QA.
-You inspect a 390x844 screenshot of a web app.
+You inspect a screenshot of a web app at the viewport size given by the user.
 You report only visual and layout bugs a human QA would file: clipped or overflowing buttons, unreadable text, elements off-canvas, overlapping content, contrast failures you are confident about, and broken images.
+The screenshot shows only the visible viewport, not the full page. Content that continues past the BOTTOM edge is normal scrolling (below the fold) and is NOT a bug. Only horizontal overflow past the left or right edge, or content clipped inside its own container, counts as clipping.
 You return a single JSON object and nothing else.
 Bounding boxes are in CSS pixels of the screenshot, origin top-left, formatted as [x, y, w, h]."""
 
-VISION_USER = """Viewport: 390x844
+VISION_USER = """Viewport: {vw}x{vh}
 Page URL: {page_url}
-Optional DOM hint (measured element geometry; elements whose rect extends past x=390 are overflowing the viewport):
+Optional DOM hint (measured element geometry; elements whose rect extends past x={vw} are overflowing the viewport):
 {dom_hint}
 
-The attached image is the mobile screenshot.
+The attached image is the screenshot.
 
 Return JSON with this exact shape:
 {{
@@ -96,14 +97,14 @@ Prefer precise boxes around the broken control, not the whole screen."""
 
 FIX_SYSTEM = """You write a crisp engineering fix prompt that a developer will paste into Cursor.
 You do not write marketing copy.
-You use the findings from a three-box QA run.
+You use the findings from a multi-agent QA run (happy path, vision check, chaos agents).
 You output a single JSON object: {"title": "...", "verdict": "DO NOT SHIP" | "SHIP IT", "fix_prompt": "markdown string"}."""
 
 FIX_USER = """Target URL: {target_url}
 Machine verdict (authoritative): {verdict}
-Box 1 Happy Path: {box1}
-Box 2 Mobile Vision bugs (JSON): {box2}
-Box 3 Chaos / containment: {box3}
+Happy-path agents: {box1}
+Vision-check bugs (JSON): {box2}
+Chaos agents / containment: {box3}
 
 Write a Cursor prompt that:
 - Names the product under test and the verdict

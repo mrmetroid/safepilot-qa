@@ -19,11 +19,66 @@ from .docker_runner import Sandbox
 
 log = logging.getLogger("safepilot.runs")
 
-BOXES = [
-    ("box1", "Happy Path", "happy_path", {"width": 1280, "height": 800}),
-    ("box2", "Mobile Vision Check", "mobile_vision", {"width": 390, "height": 844}),
-    ("box3", "Chaos Gremlin", "chaos_gremlin", {"width": 1280, "height": 800}),
-]
+# Run settings (additive to BUILD_SPEC Section 6.2). Container caps are NOT configurable:
+# RAM, swap, vCPU, PIDs, read-only rootfs and dropped caps always come from config.Settings.
+DEVICES: dict[str, dict[str, int]] = {
+    "desktop": {"width": 1280, "height": 800},
+    "tablet": {"width": 820, "height": 1180},
+    "mobile": {"width": 390, "height": 844},
+}
+PERSONA_INFO = {
+    # persona: (display name, default device)
+    "happy_path": ("Happy Path", "desktop"),  # demo preset only
+    "mobile_vision": ("Vision Check", "mobile"),
+    "chaos_gremlin": ("Chaos Gremlin", "desktop"),
+}
+MAX_AGENTS_PER_RUN = 6
+
+
+@dataclass(frozen=True)
+class RunConfig:
+    agents: tuple[tuple[str, str], ...]  # (persona, device)
+    model: str | None = None
+    max_steps: int = settings.max_steps
+    timeout_seconds: int = settings.sandbox_timeout
+    focus: str | None = None
+
+    def public(self) -> dict[str, Any]:
+        return {
+            "agents": [{"persona": p, "device": d, "viewport": DEVICES[d]} for p, d in self.agents],
+            "model": self.model or settings.inference_model,
+            "max_steps": self.max_steps,
+            "timeout_seconds": self.timeout_seconds,
+            "focus": self.focus,
+            "approval_gate": ("Happy Path pauses for a human Approve before irreversible actions"
+                              if any(p == "happy_path" for p, _ in self.agents)
+                              else "irreversible actions are refused, never executed"),
+            "caps": {"mem_limit": settings.sandbox_mem_limit, "nano_cpus": settings.sandbox_nano_cpus,
+                     "pids_limit": settings.sandbox_pids_limit, "read_only": True, "cap_drop": ["ALL"]},
+        }
+
+
+# Demo preset only: the fixed 3-box swarm from BUILD_SPEC Section 5 (Happy Path with the Approve gate).
+DEMO_CONFIG = RunConfig(agents=(("happy_path", "desktop"), ("mobile_vision", "mobile"), ("chaos_gremlin", "desktop")))
+# Default for custom URLs: no Happy Path. Irreversible actions are refused, never executed.
+DEFAULT_CONFIG = RunConfig(agents=(("mobile_vision", "mobile"), ("mobile_vision", "desktop"), ("chaos_gremlin", "desktop")))
+USER_PERSONAS = ("mobile_vision", "chaos_gremlin")
+
+
+def plan_boxes(cfg: RunConfig) -> list[tuple[str, str, str, dict[str, int]]]:
+    """Sequential box ids (box1..N) in agent order, with readable, de-duplicated names."""
+    out: list[tuple[str, str, str, dict[str, int]]] = []
+    counts: dict[str, int] = {}
+    for i, (persona, device) in enumerate(cfg.agents, start=1):
+        name, default_dev = PERSONA_INFO[persona]
+        label = name if device == default_dev else f"{name} ({device.capitalize()})"
+        if persona == "mobile_vision" and device == "mobile":
+            label = "Mobile Vision Check"
+        counts[label] = counts.get(label, 0) + 1
+        if counts[label] > 1:
+            label += f" #{counts[label]}"
+        out.append((f"box{i}", label, persona, dict(DEVICES[device])))
+    return out
 
 
 def now_iso() -> str:
@@ -114,6 +169,8 @@ class Run:
     boxes: dict[str, BoxState] = field(default_factory=dict)
     subscribers: set[asyncio.Queue] = field(default_factory=set)
     log: list[dict[str, Any]] = field(default_factory=list)
+    cfg: RunConfig = DEFAULT_CONFIG
+    annotated_box_id: str | None = None
 
     def snapshot(self) -> dict[str, Any]:
         return {
@@ -129,6 +186,8 @@ class Run:
             "fix_prompt": self.fix_prompt,
             "fix_prompt_source": self.fix_prompt_source,
             "inference_model": None,
+            "settings": self.cfg.public(),
+            "annotated_screenshot_box_id": self.annotated_box_id,
             "boxes": {k: b.snapshot() for k, b in self.boxes.items()},
         }
 
@@ -148,14 +207,21 @@ RUNS: dict[str, Run] = {}
 
 
 # =========================================================================== public API
-def create_run(mode: str, url: str | None) -> Run:
+def active_sandboxes() -> int:
+    return sum(1 for r in RUNS.values() for b in r.boxes.values()
+               if b.status in ("starting", "running", "waiting_for_approval"))
+
+
+def create_run(mode: str, url: str | None, cfg: RunConfig | None = None) -> Run:
     run_id = str(uuid.uuid4())
+    cfg = cfg or (DEMO_CONFIG if mode == "adversarial_preset" else DEFAULT_CONFIG)
     if mode == "adversarial_preset":
         run = Run(run_id, mode, settings.demo_target_public_url, settings.demo_target_sandbox_url, settings.demo_target_host)
     else:
         assert url
         run = Run(run_id, mode, url, url, approved_host="__none__")
-    for box_id, name, persona, vp in BOXES:
+    run.cfg = cfg
+    for box_id, name, persona, vp in plan_boxes(cfg):
         run.boxes[box_id] = BoxState(box_id, name, persona, vp)
     RUNS[run_id] = run
     asyncio.get_running_loop().create_task(_run_all(run))
@@ -186,7 +252,7 @@ async def _supervise_box(run: Run, box: BoxState) -> None:
         "target_url": run.target_url,
         "persona": box.persona,
         "viewport": box.viewport,
-        "max_steps": settings.max_steps,
+        "max_steps": run.cfg.max_steps,
         "step_timeout_seconds": settings.step_timeout,
         "allowed_actions": ["goto", "click", "fill", "press", "hover", "scroll", "wait", "assert_text", "screenshot", "done"],
         "initial_action": None,
@@ -250,8 +316,8 @@ async def _watchdog(run: Run, box: BoxState, sb: Sandbox, main: asyncio.Task) ->
             run.emit("box_stats", box_id=box.box_id, cpu_pct=st.cpu_pct, mem_mb=st.mem_mb, pids=st.pids,
                      elapsed_s=round(box.active_elapsed(), 1), status=box.status)
         reason = None
-        if box.paused_since is None and box.active_elapsed() > settings.sandbox_timeout:
-            reason = Containment("timeout", f"Exceeded the {settings.sandbox_timeout}s wall-clock cap")
+        if box.paused_since is None and box.active_elapsed() > run.cfg.timeout_seconds:
+            reason = Containment("timeout", f"Exceeded the {run.cfg.timeout_seconds}s wall-clock cap")
         elif getattr(box, "_armed", False) and st.hot_since and time.monotonic() - st.hot_since >= settings.cpu_trip_seconds \
                 and box.paused_since is None:
             reason = Containment("cpu_limit_exceeded",
@@ -362,7 +428,7 @@ async def _box_logic(run: Run, box: BoxState, sb: Sandbox) -> None:
             audited_urls.add(obs.get("page_url"))
             run.emit("step_update", box_id=box.box_id, step=obs.get("step"), log="Vision audit on Vultr Serverless Inference...",
                      action="vision_audit", ok=True, retry_count=box.retry_count, cpu_pct=box.cpu_pct, mem_mb=box.mem_mb)
-            audit = await agents.audit_mobile(obs, shot.get("data"))
+            audit = await agents.audit_mobile(obs, shot.get("data"), box.viewport, run.cfg.model)
             sev = lambda bugs: sum(3 if b.get("severity") == "critical" else 2 if b.get("severity") == "major" else 1 for b in bugs)  # noqa: E731
             if not box.bugs or sev(audit["bugs"]) > sev(box.bugs):
                 box.bugs = audit["bugs"]
@@ -375,13 +441,14 @@ async def _box_logic(run: Run, box: BoxState, sb: Sandbox) -> None:
                      summary=audit["summary"], source=audit["source"])
 
         step = len(history)
-        if step > settings.max_steps or (box.persona == "mobile_vision" and step > 4):
+        if step > run.cfg.max_steps or (box.persona == "mobile_vision" and step > 4):
             box.status = "completed"
             box.summary = _summary(box, "Step budget used")
             return
 
         planned = await agents.plan(box.persona, obs, shot.get("data") if shot else None, history,
-                                    run.target_url, step, settings.max_steps)
+                                    run.target_url, step, run.cfg.max_steps, model=run.cfg.model,
+                                    focus=run.cfg.focus, viewport=box.viewport)
         if planned.get("source") == "heuristic-after-error":
             box.retry_count += 1
         action = {k: planned.get(k) for k in ("action", "selector", "value", "url")}
@@ -398,7 +465,7 @@ async def _box_logic(run: Run, box: BoxState, sb: Sandbox) -> None:
         gate = policy.is_irreversible(planned, obs.get("dom_summary") or [], obs.get("page_url") or "")
         if gate:
             if box.persona != "happy_path":
-                # Only Box 1 has a human gate. Others are simply refused.
+                # Only happy-path agents have a human gate. Others are simply refused.
                 obs = {**obs, "step": step, "action": action["action"], "selector": action["selector"], "ok": False,
                        "error": f"Refused by policy: {gate} (no approval gate for this persona)"}
                 shot = None
@@ -460,7 +527,7 @@ def _summary(box: BoxState, tail: str) -> str:
         return f"Did not reach an approved submit. Last page: {last.get('page_url')}. {tail}"
     if box.persona == "mobile_vision":
         n = len([b for b in box.bugs if b.get("severity") in ("critical", "major")])
-        return f"{len(box.bugs)} mobile bug(s), {n} critical/major. {box.vision_summary or ''}".strip()
+        return f"{len(box.bugs)} visual bug(s), {n} critical/major. {box.vision_summary or ''}".strip()
     return f"Explored {len(box.steps)} step(s) without tripping a containment policy. {tail}"
 
 
@@ -492,40 +559,78 @@ async def _contain(run: Run, box: BoxState, sb: Sandbox, c: Containment) -> None
     run.emit("box_finished", box_id=box.box_id, status="contained", summary=box.summary)
 
 
+def _sev_score(bugs: list[dict[str, Any]]) -> int:
+    return sum(3 if b.get("severity") == "critical" else 2 if b.get("severity") == "major" else 1 for b in bugs)
+
+
 async def _finalize(run: Run) -> None:
-    b1, b2, b3 = run.boxes["box1"], run.boxes["box2"], run.boxes["box3"]
-    reasons = []
-    serious = sorted((b for b in b2.bugs if b.get("severity") in ("critical", "major")),
+    by = lambda p: [b for b in run.boxes.values() if b.persona == p]  # noqa: E731
+    happy, vision, chaos = by("happy_path"), by("mobile_vision"), by("chaos_gremlin")
+    reasons: list[str] = []
+
+    all_bugs: list[dict[str, Any]] = []
+    for b in vision:
+        for bug in b.bugs:
+            all_bugs.append({**bug, "box_id": b.box_id, "viewport": f"{b.viewport['width']}x{b.viewport['height']}"})
+    best = max((b for b in vision if b.bugs), key=lambda b: _sev_score(b.bugs), default=None)
+    run.annotated_box_id = best.box_id if best else (vision[0].box_id if vision else None)
+
+    serious = sorted((b for b in all_bugs if b.get("severity") in ("critical", "major")),
                      key=lambda b: b.get("severity") != "critical")
     if serious:
         top = serious[0]
-        what = re.sub(r"\s+", " ", f"{top.get('title', 'Mobile layout bug')}")
-        reasons.append(f"mobile ({top.get('severity')}): {what}")
-    if b1.status != "completed":
-        reasons.append("happy path was blocked" if b1.status == "blocked" else "happy path did not complete")
-    if b3.status == "contained" and b3.containment_receipt:
-        r = b3.containment_receipt["trigger_reason"]
-        reasons.append({"prompt_injection_detected": "the site serves a prompt-injection payload",
-                        "cpu_limit_exceeded": "the site locks up the CPU",
-                        "oom_killed": "the site exhausts memory",
-                        "timeout": "the site hangs the browser"}[r])
-    if b2.status == "failed":
-        reasons.append("mobile audit could not run")
+        what = re.sub(r"\s+", " ", f"{top.get('title', 'Layout bug')}")
+        reasons.append(f"{top['viewport']} ({top.get('severity')}): {what}")
+    for b in happy:
+        who = "happy path" if len(happy) == 1 else f"{b.name}"
+        if b.status == "completed" and b.approval.get("decision") is None:
+            reasons.append(f"{who} never reached an approvable checkout")
+        elif b.status != "completed":
+            reasons.append(f"{who} was blocked" if b.status == "blocked" else f"{who} did not complete")
+    seen: set[str] = set()
+    for b in chaos:
+        if b.status == "contained" and b.containment_receipt:
+            r = b.containment_receipt["trigger_reason"]
+            txt = {"prompt_injection_detected": "the site serves a prompt-injection payload",
+                   "cpu_limit_exceeded": "the site locks up the CPU",
+                   "oom_killed": "the site exhausts memory",
+                   "timeout": "the site hangs the browser"}.get(r, r)
+            if txt not in seen:
+                seen.add(txt)
+                reasons.append(txt)
+    for b in vision:
+        if b.status == "failed":
+            reasons.append(f"{b.name} could not run")
+    for b in happy + vision:
+        if b.status == "contained" and b.containment_receipt:
+            reasons.append(f"{b.name} was contained ({b.containment_receipt['trigger_reason']})")
+
     verdict = "DO NOT SHIP" if reasons else "SHIP IT"
     run.verdict = verdict
-    run.headline = ("; ".join(reasons).capitalize() + ".") if reasons else "Happy path approved, no major mobile bugs, chaos found nothing hostile."
+    ran = ", ".join(sorted({b.name for b in run.boxes.values()}))
+    run.headline = ("; ".join(reasons).capitalize() + ".") if reasons else f"All agents passed ({ran})."
 
-    b1_text = f"{b1.status}: {b1.summary} (approval decision: {b1.approval.get('decision')})"
-    b3_text = json_receipt(b3) if b3.containment_receipt else f"{b3.status}: {b3.summary}"
-    run.emit("step_update", box_id="box2", log="Generating Cursor fix prompt on Vultr Serverless Inference...", action="fix_prompt", ok=True)
-    fp = await agents.fix_prompt(run.url, verdict, b1_text, b2.bugs, b3_text)
+    happy_text = " | ".join(f"{b.name}: {b.status}: {b.summary} (approval decision: {b.approval.get('decision')})"
+                            for b in happy) or "not run"
+    chaos_text = " | ".join(json_receipt(b) if b.containment_receipt else f"{b.name}: {b.status}: {b.summary}"
+                            for b in chaos) or "not run"
+    log_box = run.annotated_box_id or next(iter(run.boxes))
+    run.emit("step_update", box_id=log_box, log="Generating Cursor fix prompt on Vultr Serverless Inference...",
+             action="fix_prompt", ok=True)
+    fp = await agents.fix_prompt(run.url, verdict, happy_text, all_bugs, chaos_text, model=run.cfg.model)
     run.fix_prompt = fp.get("fix_prompt")
     run.fix_prompt_source = fp.get("source")
     run.status = "completed"
     run.finished_at = now_iso()
+    ann = run.boxes.get(run.annotated_box_id) if run.annotated_box_id else None
     run.emit("run_verdict", verdict=verdict, headline=run.headline, fix_prompt=run.fix_prompt,
-             annotated_screenshot_box_id="box2", annotated_screenshot_step=b2.annotated_step,
-             bugs=b2.bugs, fix_prompt_source=run.fix_prompt_source)
+             annotated_screenshot_box_id=run.annotated_box_id,
+             annotated_screenshot_step=ann.annotated_step if ann else None,
+             bugs=ann.bugs if ann else [], all_bugs=all_bugs, fix_prompt_source=run.fix_prompt_source,
+             results=[{"box_id": b.box_id, "name": b.name, "persona": b.persona, "viewport": b.viewport,
+                       "status": b.status, "summary": b.summary, "steps": len(b.steps), "retries": b.retry_count,
+                       "bugs": len(b.bugs), "approval": b.approval.get("decision"),
+                       "contained": bool(b.containment_receipt)} for b in run.boxes.values()])
 
 
 def json_receipt(box: BoxState) -> str:
