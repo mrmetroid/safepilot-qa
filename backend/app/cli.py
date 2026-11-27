@@ -1,4 +1,4 @@
-"""SafePilot QA developer CLI (`scripts/safepilot` or `python -m app.cli` from backend/).
+"""Canary Swarm developer CLI (`scripts/safepilot` or `python -m app.cli` from backend/).
 
 The CLI is a control plane, not a sandbox: it drives the same orchestrator as the dashboard
 (run_manager, docker_runner, policy) and never runs Playwright in-process. Approvals come
@@ -31,7 +31,7 @@ from .orch import docker_runner, policy
 from .orch import run_manager as rm
 from .orch.isolation import isolation_problems
 
-app = typer.Typer(help="SafePilot QA developer CLI.", no_args_is_help=True)
+app = typer.Typer(help="Canary Swarm developer CLI.", no_args_is_help=True)
 sandbox_app = typer.Typer(help="Inspect and clean up sandbox containers.", no_args_is_help=True)
 app.add_typer(sandbox_app, name="sandbox")
 

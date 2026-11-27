@@ -1,7 +1,7 @@
 [project]
 name = "safepilot-ci"
 version = "0.1.0"
-description = "SafePilot QA CI pipeline. Same entry point locally and in GitHub Actions."
+description = "Canary Swarm CI pipeline. Same entry point locally and in GitHub Actions."
 requires-python = ">=3.12"
 dependencies = [
     "typer>=0.12",

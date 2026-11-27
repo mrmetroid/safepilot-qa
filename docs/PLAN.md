@@ -1,4 +1,4 @@
-# SafePilot QA Implementation Plan
+# Canary Swarm Implementation Plan
 
 **This file is the source of truth for what will be implemented**, in which order, by whom, and how far each step has got. It started from [`AGENTS.md`](../AGENTS.md) (Steps 1 to 5 and the verification checklist), [`BUILD_SPEC.md`](../BUILD_SPEC.md) Sections 8 and 9, and [`SUBMISSION_CHECKLIST.md`](../SUBMISSION_CHECKLIST.md). What is waiting right now is in [`HANDOFF.md`](./HANDOFF.md).
 
@@ -123,7 +123,7 @@ phases:
         title: "Isolation checks in CI and the developer CLI (PRs #3, #4)"
         status: "[x]"
         assignee: gtqgtq
-        note: "PR #3 merged 17:09 CET, PR #4 merged. Review gap: see the CI probe deferral below"
+        note: "PRs #3 and #4 merged; CI colour test fixed in PR #8. Review gap: see the CI probe deferral below"
       - id: "5.5"
         title: Preset on the public URL starts 3 boxes; Box 1 waits for Approve or Block
         status: "[x]"

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SafePilot QA developer CLI. Runs backend/app/cli.py with backend/requirements.txt via uv.
+# Canary Swarm developer CLI. Runs backend/app/cli.py with backend/requirements.txt via uv.
 #
 #   scripts/safepilot health
 #   scripts/safepilot sandbox verify

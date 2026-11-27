@@ -1,6 +1,7 @@
 import asyncio
 import json
 
+import typer
 from typer.testing import CliRunner
 
 from app import main
@@ -30,10 +31,12 @@ def test_run_rejects_unsafe_urls_before_touching_docker():
 
 
 def test_run_has_no_auto_approve_option():
-    result = runner.invoke(app, ["run", "--help"])
-    assert "--block-approvals" in result.output
-    assert "auto-approve" not in result.output.lower()
-    assert "--approve" not in result.output
+    # Check the command's real options, not its help text: on CI Typer renders help in colour,
+    # and the colour codes split option names.
+    command = typer.main.get_command(app).commands["run"]
+    flags = {flag for param in command.params for flag in (*param.opts, *param.secondary_opts)}
+    assert "--block-approvals" in flags
+    assert [flag for flag in flags if "approv" in flag] == ["--block-approvals"]
 
 
 def test_api_route_and_cli_share_one_health_report():

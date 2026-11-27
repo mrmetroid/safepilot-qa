@@ -32,7 +32,7 @@ def build_app(
     python: str = sys.executable,
 ) -> typer.Typer:
     """Build the CLI. Tests pass a fake runner factory; production uses real subprocesses."""
-    app = typer.Typer(help="SafePilot QA CI pipeline.", no_args_is_help=True)
+    app = typer.Typer(help="Canary Swarm CI pipeline.", no_args_is_help=True)
 
     def plan(root: Path | None, stages: list[str] | None):
         try:

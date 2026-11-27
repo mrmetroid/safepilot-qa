@@ -1,1 +1,1 @@
-"""SafePilot QA CI pipeline."""
+"""Canary Swarm CI pipeline."""
