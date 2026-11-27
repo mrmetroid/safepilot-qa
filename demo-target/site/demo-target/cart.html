@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Your cart | Harbor Roast</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="store.js"></script>
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="./">Harbor Roast</a>
+    <nav><a href="cart.html" id="nav-cart">Cart <span class="cart-pill" id="cart-count">0</span></a></nav>
+  </header>
+  <main>
+    <div class="panel">
+      <h2>Your cart</h2>
+      <table class="cart"><thead><tr><th>Item</th><th>Price</th></tr></thead><tbody id="lines"></tbody></table>
+      <div class="total" id="total"></div>
+      <div style="margin-top:18px; display:flex; gap:10px; justify-content:flex-end">
+        <a class="btn secondary" href="./" id="keep-shopping">Keep shopping</a>
+        <a class="btn" href="checkout.html" id="go-checkout" data-testid="go-checkout">Go to checkout</a>
+      </div>
+
+      <details class="promo" id="promo-details">
+        <summary id="promo-toggle">Have a promo code? Advanced offers</summary>
+        <div style="margin-top:10px">
+          <label for="promo-code">Promo code</label>
+          <input type="text" id="promo-code" name="promo" placeholder="e.g. FIKA10">
+          <button class="btn secondary" id="apply-promo" style="margin-top:10px" onclick="applyPromo()">Apply code</button>
+          <p style="font-size:13px;color:#8b7b6d">Tip: mystery discounts unlock with any code.</p>
+        </div>
+        <div id="promo-result"></div>
+      </details>
+    </div>
+  </main>
+  <script src="chaos.js"></script>
+  <script>
+    const items = Cart.get();
+    const lines = items.map(id => PRODUCTS.find(p => p.id === id)).filter(Boolean);
+    document.getElementById('lines').innerHTML = lines.length
+      ? lines.map(p => `<tr><td>${p.name}</td><td>${money(p.price)}</td></tr>`).join('')
+      : '<tr><td colspan="2">Your cart is empty. <a href="./">Browse beans</a></td></tr>';
+    document.getElementById('total').textContent = 'Total: ' + money(lines.reduce((s, p) => s + p.price, 0));
+  </script>
+</body>
+</html>

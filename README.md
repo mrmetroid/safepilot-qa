@@ -4,7 +4,7 @@
 
 | | |
 | --- | --- |
-| **Live Demo URL** (hosted on Vultr) | `TODO: paste the public Vultr-hosted URL here` |
+| **Live Demo URL** (hosted on Vultr) | https://70-34-205-17.sslip.io/ (Vultr `sto`, `vhp-4c-8gb-amd`) |
 | **Recorded Demo Video** (with the live Containment Moment) | `TODO: paste the public video link here` |
 
 The Vultr Community Project Showcases form has no dedicated video field. Put the recorded demo video link in this table and again at the top of the form's Overview field.

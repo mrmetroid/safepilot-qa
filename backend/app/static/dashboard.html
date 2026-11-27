@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SafePilot QA</title>
+<style>
+  :root {
+    --bg: #0b0d10; --panel: #14181d; --panel2: #1b2027; --line: #2a313a; --text: #f2f4f7; --muted: #9aa4b2;
+    --accent: #4fd1c5; --ok: #3ddc84; --warn: #ffc24b; --bad: #ff4d4f; --bad-bg: #2a0d0f; --blue: #6ea8fe;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.45 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+  header { display: flex; gap: 16px; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .brand { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+  .brand h1 { margin: 0; font-size: 24px; letter-spacing: .3px; }
+  .brand h1 span { color: var(--accent); }
+  .brand p { margin: 0; color: var(--muted); font-size: 15px; }
+  .pills { display: flex; gap: 8px; flex-wrap: wrap; }
+  .pill { font: 12px var(--mono); padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+  .pill.ok { color: var(--ok); border-color: #1f5a3a; } .pill.bad { color: var(--bad); border-color: #5a1f22; } .pill.warn { color: var(--warn); border-color: #5a4a1f; }
+  main { padding: 16px 20px 40px; max-width: 1800px; margin: 0 auto; }
+  .bar { display: flex; gap: 10px; flex-wrap: wrap; }
+  .bar input { flex: 1 1 320px; min-width: 0; font-size: 17px; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--text); }
+  button { font: inherit; font-weight: 700; border: 0; border-radius: 10px; padding: 12px 16px; cursor: pointer; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .btn-primary { background: var(--accent); color: #03201d; }
+  .btn-preset { background: #ff6b3d; color: #1d0a03; }
+  .btn-ghost { background: var(--panel2); color: var(--text); border: 1px solid var(--line); }
+  .hint { color: var(--muted); font-size: 13px; margin: 8px 2px 0; }
+  .runmeta { color: var(--muted); font: 13px var(--mono); margin-top: 10px; word-break: break-all; }
+
+  #verdict { display: none; margin-top: 16px; border-radius: 14px; padding: 18px 22px; align-items: center; gap: 20px; flex-wrap: wrap; }
+  #verdict.dns { display: flex; background: var(--bad); color: #fff; }
+  #verdict.ship { display: flex; background: var(--ok); color: #04210f; }
+  #verdict .big { font-size: 40px; font-weight: 900; letter-spacing: 1px; }
+  #verdict .head { font-size: 18px; font-weight: 600; flex: 1 1 300px; }
+
+  #approval { display: none; position: sticky; top: 0; z-index: 20; margin-top: 16px; background: var(--warn); color: #241a00; border-radius: 14px; padding: 14px 18px; align-items: center; gap: 16px; flex-wrap: wrap; box-shadow: 0 8px 30px rgba(0,0,0,.5); }
+  #approval.show { display: flex; }
+  #approval .txt { flex: 1 1 300px; font-size: 17px; }
+  #approval .txt b { font-size: 19px; }
+  .btn-approve { background: #0f7a3d; color: #fff; font-size: 18px; padding: 12px 26px; }
+  .btn-block { background: #a30f14; color: #fff; font-size: 18px; padding: 12px 26px; }
+
+  .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
+  @media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } }
+  .card { position: relative; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  .card.contained { border-color: var(--bad); box-shadow: 0 0 0 2px var(--bad) inset; }
+  .card.waiting { border-color: var(--warn); box-shadow: 0 0 0 2px var(--warn) inset; }
+  .card h2 { margin: 0; font-size: 20px; display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+  .card h2 small { font: 12px var(--mono); color: var(--muted); font-weight: 400; }
+  .persona { color: var(--muted); font-size: 13px; margin-top: -6px; }
+  .status { font: 12px var(--mono); font-weight: 700; padding: 3px 9px; border-radius: 6px; text-transform: uppercase; background: var(--panel2); color: var(--muted); white-space: nowrap; }
+  .status.running { color: var(--blue); } .status.waiting_for_approval { background: var(--warn); color: #241a00; }
+  .status.completed { color: var(--ok); } .status.contained { background: var(--bad); color: #fff; }
+  .status.blocked, .status.failed { color: var(--bad); }
+  .meters { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; font: 12px var(--mono); color: var(--muted); }
+  .meter .track { height: 8px; background: var(--panel2); border-radius: 4px; overflow: hidden; margin-top: 3px; }
+  .meter .fill { height: 100%; width: 0; background: var(--accent); transition: width .4s; }
+  .meter .fill.hot { background: var(--bad); }
+  .facts { display: flex; gap: 14px; flex-wrap: wrap; font: 12px var(--mono); color: var(--muted); }
+  .facts b { color: var(--text); }
+  .iso { font: 11px var(--mono); color: var(--muted); background: var(--panel2); border-radius: 8px; padding: 6px 8px; line-height: 1.6; }
+  .iso .g { color: var(--ok); }
+  .shot { position: relative; background: #000; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); min-height: 120px; display: flex; align-items: flex-start; justify-content: center; }
+  .shot.mobile { max-width: 260px; margin: 0 auto; width: 100%; }
+  .shot img { width: 100%; display: block; }
+  .shot .empty { color: var(--muted); padding: 40px 10px; font-size: 13px; text-align: center; }
+  .bbox { position: absolute; border: 3px solid var(--bad); box-shadow: 0 0 0 1px #000; pointer-events: none; }
+  .bbox span { position: absolute; left: -3px; top: -22px; background: var(--bad); color: #fff; font: 700 11px var(--mono); padding: 2px 5px; white-space: nowrap; max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
+  .film { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+  .film img { height: 54px; border-radius: 4px; border: 2px solid transparent; cursor: pointer; flex: 0 0 auto; }
+  .film img.sel { border-color: var(--accent); }
+  .log { font: 12px/1.5 var(--mono); background: #07090b; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; height: 190px; overflow-y: auto; }
+  .log div { white-space: pre-wrap; word-break: break-word; }
+  .log .t { color: #5d6875; } .log .ok { color: var(--ok); } .log .err { color: var(--bad); } .log .th { color: var(--muted); } .log .sys { color: var(--warn); }
+
+  .receipt { display: none; position: absolute; inset: 0; background: rgba(42, 13, 15, .97); border-radius: 14px; padding: 18px; flex-direction: column; gap: 10px; z-index: 5; overflow-y: auto; }
+  .receipt.show { display: flex; }
+  .receipt h3 { margin: 0; color: var(--bad); font-size: 26px; letter-spacing: 1px; }
+  .receipt .sub { color: #ffb3b5; font-size: 14px; }
+  .receipt table { width: 100%; border-collapse: collapse; font: 13px var(--mono); }
+  .receipt td { padding: 5px 4px; border-bottom: 1px solid #4a1d20; vertical-align: top; word-break: break-word; }
+  .receipt td:first-child { color: #ffb3b5; width: 44%; }
+  .receipt .notes { font: 12px var(--mono); color: #ffd7d8; background: #1a0607; border-radius: 8px; padding: 8px; word-break: break-word; }
+  .receipt .badges { display: flex; gap: 8px; flex-wrap: wrap; }
+  .receipt .badge { background: #12361f; color: var(--ok); font: 700 12px var(--mono); padding: 4px 8px; border-radius: 6px; }
+  .receipt button { align-self: flex-start; }
+
+  .results { display: none; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 16px; margin-top: 16px; }
+  .results.show { display: grid; }
+  @media (max-width: 1100px) { .results.show { grid-template-columns: 1fr; } }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; min-width: 0; }
+  .panel h3 { margin: 0 0 10px; font-size: 18px; }
+  .bugs { list-style: none; padding: 0; margin: 10px 0 0; display: flex; flex-direction: column; gap: 8px; }
+  .bugs li { background: var(--panel2); border-radius: 8px; padding: 8px 10px; font-size: 14px; }
+  .sev { font: 700 11px var(--mono); padding: 2px 6px; border-radius: 4px; margin-right: 6px; text-transform: uppercase; }
+  .sev.critical { background: var(--bad); color: #fff; } .sev.major { background: #ff8a3d; color: #1d0a03; } .sev.minor { background: var(--panel); color: var(--muted); }
+  pre.fix { white-space: pre-wrap; word-break: break-word; background: #07090b; border: 1px solid var(--line); border-radius: 10px; padding: 12px; font: 13px/1.5 var(--mono); max-height: 420px; overflow-y: auto; margin: 10px 0 0; }
+  .row { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+  .copied { color: var(--ok); font-weight: 700; }
+  footer { color: var(--muted); font-size: 12px; text-align: center; padding: 20px; }
+  .src { font: 11px var(--mono); color: var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <h1>SafePilot <span>QA</span></h1>
+    <p>Untrusted AI code deserves untrusted AI testers in disposable boxes.</p>
+  </div>
+  <div class="pills" id="pills"><span class="pill">checking health...</span></div>
+</header>
+<main>
+  <div class="bar">
+    <input id="url" type="url" placeholder="Paste a public preview URL, e.g. https://my-app.vercel.app" autocomplete="off">
+    <button class="btn-primary" id="go">Start QA Sweep</button>
+    <button class="btn-preset" id="preset">Load Adversarial Test App (Demo Preset)</button>
+  </div>
+  <p class="hint">Public http(s) URLs only. Login walls and bot blockers may make a box fail honestly. Irreversible submits always wait for a human.</p>
+  <div class="runmeta" id="runmeta"></div>
+
+  <div id="approval">
+    <div class="txt"><b>Box 1 wants to perform an irreversible action.</b><br><span id="approval-detail"></span></div>
+    <button class="btn-approve" id="approve">Approve</button>
+    <button class="btn-block" id="block">Block</button>
+  </div>
+
+  <div id="verdict"><div class="big" id="verdict-big"></div><div class="head" id="verdict-head"></div></div>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="results" id="results">
+    <div class="panel">
+      <h3>Broken UI, as the vision check saw it</h3>
+      <div class="shot mobile" id="annotated"><div class="empty">No annotated screenshot.</div></div>
+      <ul class="bugs" id="buglist"></ul>
+    </div>
+    <div class="panel">
+      <div class="row"><h3 style="margin:0">Fix prompt</h3>
+        <div><span id="copied"></span> <button class="btn-primary" id="copy">Copy Fix Prompt for Cursor</button></div></div>
+      <div class="src" id="fixsrc"></div>
+      <pre class="fix" id="fix"></pre>
+    </div>
+  </div>
+</main>
+<footer>Control plane, dashboard and Docker sandboxes on a Vultr Stockholm VM. Planning and vision on Vultr Serverless Inference.</footer>
+
+<template id="card-tpl">
+  <div class="card">
+    <h2><span class="name"></span><span class="status">idle</span></h2>
+    <div class="persona"></div>
+    <div class="facts"><span>container <b class="cid">-</b></span><span>step <b class="stepn">0</b></span><span>retries <b class="retries">0</b></span><span>t <b class="elapsed">0</b>s</span></div>
+    <div class="meters">
+      <div class="meter">CPU <b class="cpu">0</b>% of 1 vCPU<div class="track"><div class="fill cpuf"></div></div></div>
+      <div class="meter">RAM <b class="mem">0</b> / 512 MiB<div class="track"><div class="fill memf"></div></div></div>
+    </div>
+    <div class="iso">waiting for container...</div>
+    <div class="shot"><div class="empty">No screenshot yet.</div></div>
+    <div class="film"></div>
+    <div class="log"></div>
+    <div class="receipt">
+      <h3>CONTAINMENT RECEIPT</h3>
+      <div class="sub">Box killed and wiped. The other boxes keep running.</div>
+      <div class="badges"></div>
+      <table></table>
+      <div class="notes"></div>
+      <button class="btn-ghost hide-receipt">Show box timeline</button>
+    </div>
+  </div>
+</template>
+
+<script>
+const BOXES = [
+  { id: 'box1', name: 'Box 1 Happy Path', persona: 'Desktop buyer. Pauses before any irreversible submit.' },
+  { id: 'box2', name: 'Box 2 Mobile Vision Check', persona: '390x844 auditor. Vision model returns bug boxes.' },
+  { id: 'box3', name: 'Box 3 Chaos Gremlin', persona: 'Adversarial explorer. Promo codes, odd inputs, hidden controls.' },
+];
+const $ = (s, el = document) => el.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+let ws = null, runId = null, state = null;
+const shots = {}; // box -> [{step, src, w, h}]
+const selected = {}; // box -> step currently shown
+const bugsByBox = {}; // box -> {step, bugs}
+
+function cards() {
+  const grid = $('#grid'); grid.innerHTML = '';
+  for (const b of BOXES) {
+    const el = $('#card-tpl').content.firstElementChild.cloneNode(true);
+    el.id = 'card-' + b.id;
+    $('.name', el).textContent = b.name;
+    $('.persona', el).textContent = b.persona;
+    if (b.id === 'box2') $('.shot', el).classList.add('mobile');
+    $('.hide-receipt', el).onclick = () => $('.receipt', el).classList.toggle('show');
+    grid.appendChild(el);
+    shots[b.id] = []; selected[b.id] = null; delete bugsByBox[b.id];
+  }
+}
+const card = (id) => $('#card-' + id);
+
+function log(box, cls, text, ts) {
+  const c = card(box); if (!c) return;
+  const l = $('.log', c);
+  const t = (ts ? new Date(ts) : new Date()).toLocaleTimeString([], { hour12: false });
+  const d = document.createElement('div');
+  d.innerHTML = `<span class="t">${t}</span> <span class="${cls}">${esc(text)}</span>`;
+  l.appendChild(d); l.scrollTop = l.scrollHeight;
+}
+
+function setStatus(box, status) {
+  const c = card(box); if (!c) return;
+  const s = $('.status', c); s.className = 'status ' + status; s.textContent = status.replaceAll('_', ' ');
+  c.classList.toggle('contained', status === 'contained');
+  c.classList.toggle('waiting', status === 'waiting_for_approval');
+}
+
+function setStats(box, cpu, mem, elapsed) {
+  const c = card(box); if (!c) return;
+  $('.cpu', c).textContent = (cpu ?? 0).toFixed(0);
+  $('.mem', c).textContent = (mem ?? 0).toFixed(0);
+  const cf = $('.cpuf', c); cf.style.width = Math.min(100, cpu || 0) + '%'; cf.classList.toggle('hot', cpu > 85);
+  const mf = $('.memf', c); mf.style.width = Math.min(100, (mem || 0) / 5.12) + '%'; mf.classList.toggle('hot', mem > 430);
+  if (elapsed != null) $('.elapsed', c).textContent = elapsed.toFixed(0);
+}
+
+function setIsolation(box, iso, cid) {
+  const c = card(box); if (!c || !iso) return;
+  $('.cid', c).textContent = cid || '-';
+  const mem = iso.memory_bytes ? (iso.memory_bytes / 1048576) + ' MiB' : '?';
+  $('.iso', c).innerHTML =
+    `<span class="g">&#10003;</span> env: ${esc((iso.env_names || []).length)} vars, <b>${esc(iso.secrets_exposed)} secrets</b> ` +
+    `<span class="g">&#10003;</span> rootfs ${iso.readonly_rootfs ? 'read-only' : 'WRITABLE'} ` +
+    `<span class="g">&#10003;</span> ${mem}, ${(iso.nano_cpus || 0) / 1e9} vCPU, ${esc(iso.pids_limit)} PIDs ` +
+    `<span class="g">&#10003;</span> caps dropped: ${esc((iso.cap_drop || []).join(','))} ` +
+    `<span class="g">&#10003;</span> user ${esc(iso.user || '?')}, net ${esc(iso.network_mode)}`;
+}
+
+function addShot(box, step, src, w, h) {
+  const list = shots[box]; const i = list.findIndex(s => s.step === step);
+  const rec = { step, src, w, h };
+  if (i >= 0) list[i] = rec; else list.push(rec);
+  selected[box] = step;
+  renderShot(box);
+}
+
+function bboxHtml(bugs, w, h) {
+  return (bugs || []).filter(b => Array.isArray(b.bbox)).map(b => {
+    const [x, y, bw, bh] = b.bbox;
+    return `<div class="bbox" style="left:${x / w * 100}%;top:${y / h * 100}%;width:${bw / w * 100}%;height:${bh / h * 100}%"><span>${esc(b.severity)}: ${esc(b.title)}</span></div>`;
+  }).join('');
+}
+
+function renderShot(box) {
+  const c = card(box); if (!c) return;
+  const list = shots[box]; const cur = list.find(s => s.step === selected[box]) || list[list.length - 1];
+  const shot = $('.shot', c);
+  if (cur) {
+    const bb = bugsByBox[box] && bugsByBox[box].step === cur.step ? bboxHtml(bugsByBox[box].bugs, cur.w, cur.h) : '';
+    shot.innerHTML = `<img src="${cur.src}" alt="step ${cur.step}">${bb}`;
+  }
+  $('.film', c).innerHTML = list.map(s => `<img src="${s.src}" data-step="${s.step}" class="${cur && s.step === cur.step ? 'sel' : ''}" title="step ${s.step}">`).join('');
+  $('.film', c).querySelectorAll('img').forEach(img => img.onclick = () => { selected[box] = +img.dataset.step; renderShot(box); });
+  $('.stepn', c).textContent = list.length ? list[list.length - 1].step : 0;
+}
+
+function showReceipt(box, r) {
+  const c = card(box); if (!c) return;
+  const rc = $('.receipt', c);
+  const keys = ['trigger_reason', 'signal', 'elapsed_ms', 'peak_cpu_pct', 'peak_mem_mb', 'secrets_exposed', 'host_impact', 'container_destroyed', 'container_id', 'box_name', 'timestamp_iso'];
+  $('table', rc).innerHTML = keys.map(k => `<tr><td>${k}</td><td>${esc(JSON.stringify(r[k]))}</td></tr>`).join('');
+  $('.notes', rc).textContent = r.notes || '';
+  $('.badges', rc).innerHTML = [
+    r.secrets_exposed === 0 ? 'secrets_exposed: 0' : null,
+    r.host_impact === 'none' ? 'host_impact: none' : null,
+    r.container_destroyed ? 'container destroyed' : null,
+  ].filter(Boolean).map(b => `<span class="badge">&#10003; ${b}</span>`).join('');
+  rc.classList.add('show');
+}
+
+function showApproval(ev) {
+  $('#approval-detail').textContent = `${ev.reason}. Action: ${ev.action} ${ev.selector || ''} on ${ev.page_url || ''}`;
+  $('#approval').classList.add('show');
+  $('#approve').disabled = $('#block').disabled = false;
+}
+
+async function decide(decision) {
+  $('#approve').disabled = $('#block').disabled = true;
+  const r = await fetch(`/api/runs/${runId}/boxes/box1/approve`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ decision }) });
+  if (r.ok) $('#approval').classList.remove('show'); else { $('#approve').disabled = $('#block').disabled = false; }
+}
+
+function showVerdict(ev) {
+  const v = $('#verdict'); v.className = ev.verdict === 'SHIP IT' ? 'ship' : 'dns';
+  $('#verdict-big').textContent = ev.verdict;
+  $('#verdict-head').textContent = ev.headline || '';
+  $('#fix').textContent = ev.fix_prompt || '';
+  $('#fixsrc').textContent = ev.fix_prompt_source ? `generated by: ${ev.fix_prompt_source}` : '';
+  $('#results').classList.add('show');
+  const step = ev.annotated_screenshot_step;
+  const ann = $('#annotated');
+  const s = (shots.box2 || []).find(x => x.step === step) || (shots.box2 || [])[0];
+  const bugs = ev.bugs || (bugsByBox.box2 || {}).bugs || [];
+  if (s) ann.innerHTML = `<img src="${s.src}">${bboxHtml(bugs, s.w, s.h)}`;
+  $('#buglist').innerHTML = bugs.length ? bugs.map(b => `<li><span class="sev ${esc(b.severity)}">${esc(b.severity)}</span><b>${esc(b.title)}</b><br><span style="color:var(--muted)">${esc(b.description)}</span> <span class="src">[${esc(b.source || '')}]</span></li>`).join('') : '<li>No mobile bugs reported.</li>';
+  $('#go').disabled = $('#preset').disabled = false;
+}
+
+function handle(ev) {
+  const b = ev.box_id;
+  switch (ev.type) {
+    case 'snapshot': return applySnapshot(ev.run);
+    case 'box_started': setStatus(b, 'running'); setIsolation(b, ev.isolation, ev.container_id); log(b, 'sys', `container ${ev.container_id} started with caps. secrets in env: ${ev.isolation?.secrets_exposed}`, ev.ts); break;
+    case 'step_update':
+      if (ev.action === 'vision_audit' || ev.action === 'fix_prompt') { log(b, 'sys', ev.log, ev.ts); break; }
+      if (ev.thought) log(b, 'th', `> ${ev.thought}${ev.source ? '  [' + ev.source + ']' : ''}`, ev.ts);
+      log(b, ev.ok ? 'ok' : 'err', `#${ev.step} ${ev.log}`, ev.ts);
+      (ev.console_errors || []).forEach(m => log(b, 'err', `console: ${m}`, ev.ts));
+      $('.retries', card(b)).textContent = ev.retry_count ?? 0;
+      break;
+    case 'screenshot': addShot(b, ev.step, `data:${ev.content_type};base64,${ev.data_base64}`, ev.width, ev.height); break;
+    case 'box_stats': setStats(b, ev.cpu_pct, ev.mem_mb, ev.elapsed_s); break;
+    case 'approval_required': setStatus(b, 'waiting_for_approval'); log(b, 'sys', `PAUSED for human approval: ${ev.reason}`, ev.ts); showApproval(ev); break;
+    case 'approval_decided': setStatus(b, 'running'); log(b, ev.decision === 'approve' ? 'ok' : 'err', `Human decision: ${ev.decision.toUpperCase()}`, ev.ts); $('#approval').classList.remove('show'); break;
+    case 'vision_result':
+      log(b, 'sys', `vision: ${ev.bugs.length} bug(s) [${ev.source}]`, ev.ts);
+      ev.bugs.forEach(x => log(b, x.severity === 'minor' ? 'th' : 'err', `  ${x.severity}: ${x.title}`, ev.ts));
+      if (!bugsByBox[b] || ev.bugs.length >= bugsByBox[b].bugs.length) { bugsByBox[b] = { step: ev.step, bugs: ev.bugs }; selected[b] = ev.step; renderShot(b); }
+      break;
+    case 'containment_triggered': setStatus(b, 'contained'); log(b, 'err', `CONTAINED: ${ev.trigger_reason}. SIGKILL + remove in ${ev.elapsed_ms} ms`, ev.ts); showReceipt(b, ev); break;
+    case 'box_finished': setStatus(b, ev.status); log(b, ev.status === 'completed' ? 'ok' : 'err', `finished: ${ev.status}. ${ev.summary || ''}`, ev.ts); if (b === 'box1') $('#approval').classList.remove('show'); break;
+    case 'run_verdict': showVerdict(ev); break;
+  }
+}
+
+async function applySnapshot(run) {
+  state = run;
+  $('#runmeta').textContent = `run ${run.run_id} | target ${run.url} | model ${run.inference_model || '?'}`;
+  for (const [id, bx] of Object.entries(run.boxes)) {
+    setStatus(id, bx.status);
+    if (bx.isolation && bx.container_id) setIsolation(id, bx.isolation, bx.container_id);
+    setStats(id, bx.cpu_pct, bx.mem_mb);
+    if (!shots[id].length) for (const s of bx.screenshots) addShot(id, s.step, `/api/runs/${run.run_id}/boxes/${id}/screenshots/${s.step}`, s.width, s.height);
+    if (!$('.log', card(id)).children.length) bx.steps.forEach(st => log(id, st.ok ? 'ok' : 'err', `#${st.step} ${st.action} ${st.selector || st.page_url || ''}`));
+    if (bx.bugs?.length) { bugsByBox[id] = { step: bx.annotated_step, bugs: bx.bugs }; renderShot(id); }
+    if (bx.containment_receipt) showReceipt(id, bx.containment_receipt);
+    if (bx.status === 'waiting_for_approval' && bx.approval) showApproval({ reason: bx.approval.reason, action: bx.approval.action?.action, selector: bx.approval.action?.selector, page_url: bx.approval.page_url });
+  }
+  if (run.verdict) showVerdict({ verdict: run.verdict, headline: run.headline, fix_prompt: run.fix_prompt, fix_prompt_source: run.fix_prompt_source, annotated_screenshot_step: run.boxes.box2.annotated_step, bugs: run.boxes.box2.bugs });
+}
+
+function connect(id) {
+  if (ws) ws.close();
+  runId = id; location.hash = 'run=' + id;
+  ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws/runs/${id}`);
+  ws.onmessage = (m) => handle(JSON.parse(m.data));
+  ws.onclose = () => { if (state && !state.verdict && runId === id) setTimeout(() => connect(id), 1500); };
+}
+
+async function start(body) {
+  $('#go').disabled = $('#preset').disabled = true;
+  $('#verdict').className = ''; $('#results').classList.remove('show'); $('#approval').classList.remove('show'); $('#copied').textContent = '';
+  cards();
+  const r = await fetch('/api/runs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const j = await r.json();
+  if (!r.ok) { alert(j.detail || 'Could not start run'); $('#go').disabled = $('#preset').disabled = false; return; }
+  state = { run_id: j.run_id };
+  BOXES.forEach(b => { setStatus(b.id, 'starting'); log(b.id, 'sys', 'spawning disposable sandbox...'); });
+  connect(j.run_id);
+}
+
+async function health() {
+  try {
+    const h = await (await fetch('/api/health')).json();
+    const pill = (label, ok, warn) => `<span class="pill ${ok ? 'ok' : warn ? 'warn' : 'bad'}">${esc(label)}</span>`;
+    $('#pills').innerHTML =
+      pill('control plane', h.control_plane === 'ok') +
+      pill('docker', h.docker === 'ok') +
+      pill('sandbox image', h.sandbox_image_present) +
+      pill(h.inference === 'ok' ? `Vultr Inference: ${h.inference_model}` : `Vultr Inference: ${h.inference}`, h.inference === 'ok', h.inference === 'missing_key');
+  } catch { $('#pills').innerHTML = '<span class="pill bad">control plane unreachable</span>'; }
+}
+
+$('#go').onclick = () => { const u = $('#url').value.trim(); if (u) start({ mode: 'custom', url: u }); };
+$('#url').onkeydown = (e) => { if (e.key === 'Enter') $('#go').click(); };
+$('#preset').onclick = () => start({ mode: 'adversarial_preset' });
+$('#approve').onclick = () => decide('approve');
+$('#block').onclick = () => decide('block');
+$('#copy').onclick = async () => {
+  const text = $('#fix').textContent;
+  try { await navigator.clipboard.writeText(text); }
+  catch { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }
+  $('#copied').innerHTML = '<span class="copied">Copied</span>';
+};
+
+cards(); health(); setInterval(health, 30000);
+const m = location.hash.match(/run=([0-9a-f-]+)/); if (m) connect(m[1]);
+</script>
+</body>
+</html>

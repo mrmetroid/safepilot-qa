@@ -1,0 +1,12 @@
+# SafePilot QA on the Vultr VM. provision.sh substitutes SITE_ADDRESS
+# (":80" for plain HTTP on the raw IP, or "<ip-with-dashes>.sslip.io" for automatic HTTPS).
+{$SITE_ADDRESS::80} {
+	encode gzip
+	handle /demo-target* {
+		reverse_proxy 127.0.0.1:8081
+	}
+	handle {
+		# Dashboard, /api/* and /ws/* are all served by the control plane.
+		reverse_proxy 127.0.0.1:8000
+	}
+}

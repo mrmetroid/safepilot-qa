@@ -695,6 +695,17 @@ The payload is the Containment Receipt from Section 3.6 plus `"type": "containme
 
 `verdict` is exactly `DO NOT SHIP` or `SHIP IT`.
 
+**Additive events (optional, consumed by the dashboard)**
+
+These are not required by the contract above, but the dashboard renders them if sent. Without `vision_audit`, Box 2 bugs only appear once the UI re-fetches `GET /api/runs/{run_id}` (it does so on connect, on Box 2 `box_finished`, and on `run_verdict`), so `boxes.box2.bugs` must be present in that snapshot.
+
+```json
+{"type": "vision_audit", "run_id": "...", "box_id": "box2", "ts": "...", "step": 3, "summary": "...", "bugs": [{"id": "bug-1", "severity": "critical", "title": "...", "description": "...", "bbox": [x, y, w, h]}]}
+{"type": "box_stats", "run_id": "...", "box_id": "box3", "ts": "...", "cpu_pct": 97.5, "mem_mb": 201.3}
+```
+
+A `screenshot` event may carry `url` instead of `data_base64` when the side-channel route is used.
+
 ### 6.4 `POST /api/runs/{run_id}/boxes/{box_id}/approve`
 
 Request:

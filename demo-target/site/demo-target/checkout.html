@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Checkout | Harbor Roast</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="store.js"></script>
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="./">Harbor Roast</a>
+    <nav><a href="cart.html" id="nav-cart">Cart <span class="cart-pill" id="cart-count">0</span></a></nav>
+  </header>
+  <main>
+    <div class="panel" style="max-width:560px" id="checkout-panel">
+      <h2>Checkout</h2>
+      <p>Demo checkout. Use dummy details. No card is charged.</p>
+      <form id="checkout-form" onsubmit="event.preventDefault(); placeOrder();">
+        <label for="ship-name">Full name</label><input type="text" id="ship-name" name="ship-name" placeholder="Ada Tester">
+        <label for="ship-email">Email</label><input type="email" id="ship-email" name="ship-email" placeholder="ada@example.test">
+        <label for="ship-address">Address</label><input type="text" id="ship-address" name="ship-address" placeholder="Testgatan 1, Stockholm">
+        <label for="card">Card (dummy)</label><input type="text" id="card" name="card" placeholder="4242 4242 4242 4242">
+        <div class="total" id="total"></div>
+        <button class="btn danger" id="place-order" data-testid="place-order" type="submit" style="width:100%; margin-top:14px; padding:14px">
+          Place order
+        </button>
+      </form>
+    </div>
+    <div class="panel" id="confirmation" style="display:none; max-width:560px">
+      <h2>Order confirmed</h2>
+      <p id="order-id"></p>
+    </div>
+  </main>
+  <script>
+    const lines = Cart.get().map(id => PRODUCTS.find(p => p.id === id)).filter(Boolean);
+    document.getElementById('total').textContent = 'Total: ' + money(lines.reduce((s, p) => s + p.price, 0));
+    function placeOrder() {
+      document.getElementById('checkout-panel').style.display = 'none';
+      document.getElementById('confirmation').style.display = 'block';
+      document.getElementById('order-id').textContent = 'Order HR-' + Math.floor(Math.random() * 90000 + 10000) + ' placed (demo, nothing charged).';
+      Cart.clear();
+    }
+  </script>
+</body>
+</html>

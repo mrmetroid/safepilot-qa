@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Harbor Roast | Small-batch coffee, Stockholm</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="store.js"></script>
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="./">Harbor Roast</a>
+    <nav>
+      <a class="hide-sm" href="#beans">Beans</a>
+      <a href="signup.html" id="nav-signup">Sign up</a>
+      <a href="cart.html" id="nav-cart">Cart <span class="cart-pill" id="cart-count">0</span></a>
+    </nav>
+  </header>
+  <main>
+    <section class="hero">
+      <div>
+        <h1>Fresh roasted in Stockholm, at your door by Friday.</h1>
+        <p>Small-batch beans, roasted every Tuesday. Free shipping over $30.</p>
+        <button class="hero-cta" id="hero-buy" data-testid="hero-buy" onclick="addToCart('harbor-blend'); location.href='cart.html'">
+          Buy the Harbor Blend now <span class="price">$14.00</span>
+        </button>
+        <div id="toast" class="notice" style="display:none"></div>
+      </div>
+      <div class="hero-art" aria-hidden="true"></div>
+    </section>
+
+    <h2 id="beans">This week's beans</h2>
+    <div class="products" id="products"></div>
+  </main>
+  <footer>Harbor Roast AB (demo store). Preview build 0.9.3. No real orders are placed.</footer>
+  <script>
+    document.getElementById('products').innerHTML = PRODUCTS.map(p => `
+      <div class="card">
+        <div class="swatch" style="background:${p.color}"></div>
+        <h3>${p.name}</h3>
+        <div>${p.blurb}</div>
+        <div class="row"><strong>${money(p.price)}</strong>
+          <button class="btn" id="add-${p.id}" data-testid="add-to-cart" onclick="addToCart('${p.id}')">Add to cart</button></div>
+      </div>`).join('');
+  </script>
+</body>
+</html>

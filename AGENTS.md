@@ -2,7 +2,7 @@
 
 Instructions for Cursor, Claude, GPT, or any other coding agent working in this repository.
 
-Read this file first. Then implement against [`BUILD_SPEC.md`](./BUILD_SPEC.md) without inventing requirements. If a detail is missing, add a clearly marked `TODO` and keep going. Do not silently change the architecture.
+Read this file first. For the organizer's official brief (tracks, required stack, deliverables), see [`docs/HACKATHON_BRIEF.md`](./docs/HACKATHON_BRIEF.md). Then implement against [`BUILD_SPEC.md`](./BUILD_SPEC.md) without inventing requirements. If a detail is missing, add a clearly marked `TODO` and keep going. Do not silently change the architecture.
 
 ## Mission (10 lines)
 
