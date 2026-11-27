@@ -27,6 +27,7 @@ team:
   - LeoEckert
   - Julian-se
   - mrmetroid     # repo owner account
+  - LeeSandberg
 
 phases:
   - id: phase-1
@@ -120,21 +121,30 @@ phases:
         note: "PR #1 open"
       - id: "5.4"
         title: "Isolation checks in CI and the developer CLI (PRs #3, #4)"
-        status: "[~]"
+        status: "[x]"
         assignee: gtqgtq
-        note: "PR #3 (CI with the Section 8.4 probe) and PR #4 (safepilot sandbox verify) open"
+        note: "PR #3 merged 17:09 CET, PR #4 merged. Review gap: see the CI probe deferral below"
       - id: "5.5"
         title: Preset on the public URL starts 3 boxes; Box 1 waits for Approve or Block
-        status: "[ ]"
+        status: "[x]"
+        note: "Public URL 27 Nov ~14:45 CET: run f60147f4 Approve submitted the order, run 072e6b84 Block stopped it (status blocked). Box 1 did not trip the CPU watchdog on the VM in either run"
       - id: "5.6"
         title: Box 2 red box on 390x844, Box 3 receipt, Boxes 1 and 2 finish
-        status: "[ ]"
+        status: "[x]"
+        note: "Run f60147f4: Box 2 bbox on the clipped hero (bbox covers the heading, not the CTA); Box 3 prompt_injection_detected, SIGKILL in 196 ms, secrets_exposed 0, host_impact none, container_destroyed true. Box 1 finished 0.2 s before Box 3 was contained, Box 2 after"
       - id: "5.7"
         title: Verdict and a fix prompt that copies to the clipboard, on the public URL
-        status: "[ ]"
+        status: "[~]"
+        note: "Public: run f60147f4 DO NOT SHIP with a 1.5k-char fix prompt (source vultr-inference). Clipboard copy verified only locally (e2e/, both viewports); not yet on the public URL"
       - id: "5.8"
         title: An arbitrary public URL also starts a 3-box run
-        status: "[ ]"
+        status: "[x]"
+        note: "Run acc00697 https://example.com: 3 boxes, SHIP IT, 0 bugs. See the vision false-positive deferral for other real sites"
+      - id: "5.9"
+        title: "e2e: Playwright + Vultr vision on the three front ends (vanilla, React, demo-target) at 390x844 and 1280x800"
+        status: "[~]"
+        assignee: LeeSandberg
+        note: "e2e/ on branch lee: 18/18 pass locally with live sweeps and Vultr vision. Not run against the public URL: local Chromium fails with ERR_INVALID_HANDLE on the sslip.io host"
 
   - id: phase-6
     title: Submit
@@ -190,4 +200,19 @@ deferrals:
     expiry: "7.1"
     to: Add them to the CI images stage with SAFEPILOT_REQUIRE_DOCKER=1
     from: "PR #4"
+  - item: "Vision false positives on real sites: 5 of 6 custom sweeps at 17:27 CET got DO NOT SHIP; TodoMVC (run b5af2dc5) is critical on a page that renders fine, with the vision box on empty background"
+    severity: pre-demo
+    expiry: "6.1"
+    to: Record the video on the demo preset; do not sweep arbitrary sites live. After the deadline, only fail on vision bugs that DOM geometry corroborates
+    from: "e2e audit, 27 Nov (LeeSandberg)"
+  - item: "CI isolation probe cannot detect a leak: canary keys are set on the docker CLI env, never passed with -e, and SANDBOX_FLAGS is a copy of docker_runner's settings"
+    severity: post-demo
+    expiry: "7.1"
+    to: Start the probe container through docker_runner (or docker inspect a real sandbox) and fail on SKIPPED security steps
+    from: "PR #3 review, 27 Nov"
+  - item: "Box 2 geometry rule flags elements inside horizontal scrollers (carousels, filmstrips) and off-canvas menus as clipped"
+    severity: post-demo
+    expiry: "7.1"
+    to: Skip elements whose ancestor has overflow-x auto or scroll (as e2e/tests/layout.py does)
+    from: "e2e audit, 27 Nov (LeeSandberg)"
 ```
