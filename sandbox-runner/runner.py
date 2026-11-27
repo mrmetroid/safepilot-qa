@@ -226,8 +226,18 @@ def main() -> int:
     emit("runner_started", pid=os.getpid(), viewport=vp, uid=os.getuid(), pids=pids_current())
 
     with sync_playwright() as pw:
+        # cap_drop=ALL removes the setuid Chromium sandbox. The container flags
+        # (read-only root, no capabilities, dedicated bridge, empty env) are the
+        # isolation boundary, so Chromium itself runs without its own sandbox.
         browser = pw.chromium.launch(
-            args=["--disable-dev-shm-usage", "--disable-gpu", "--no-zygote", "--renderer-process-limit=2"],
+            args=[
+                "--no-sandbox",
+                "--disable-setuid-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-gpu",
+                "--no-zygote",
+                "--renderer-process-limit=2",
+            ],
         )
         ctx = browser.new_context(
             viewport=vp,
