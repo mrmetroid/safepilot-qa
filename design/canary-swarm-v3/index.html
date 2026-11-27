@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en" class="is-booting" data-motion="on">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Canary Swarm · Demo Run</title>
+  <link rel="stylesheet" href="fonts.css">
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand__mark" data-sp-mark="header" data-on-dark="false"></div>
+        <div class="brand__text">
+          <p class="brand__name">CANARY SWARM</p>
+          <span class="pill">Demo Run</span>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="field">
+          <label for="preview-url">Preview URL</label>
+          <input id="preview-url" name="preview-url" type="url" spellcheck="false" autocomplete="off" value="https://demo-target.canaryswarm.app/checkout">
+        </div>
+        <button type="button" class="btn btn--preset" data-action="preset">Load Adversarial Test App (Demo Preset)</button>
+        <button type="button" class="btn btn--primary" data-action="run">Run Sweep</button>
+      </div>
+
+      <div class="topbar__tools">
+        <button type="button" class="btn btn--ghost btn--pause" data-action="pause" aria-pressed="false">Pause Motion</button>
+        <nav class="jumps" aria-label="Demo states">
+          <button type="button" data-state="climax" aria-current="true">Climax</button>
+          <button type="button" data-state="running">Running</button>
+          <button type="button" data-state="clean">Clean</button>
+        </nav>
+      </div>
+    </header>
+
+    <p class="pillars">
+      <span><strong>3</strong> isolated cages</span>
+      <span><strong>0</strong> secrets in sandbox</span>
+      <span><strong>1 vCPU / 512 MB</strong> cap</span>
+      <span>ephemeral wipe</span>
+    </p>
+
+    <main class="stage">
+      <!-- Cage 1 -->
+      <article class="cage cage--1" data-status="hold" aria-label="Cage 1 Happy Path">
+        <div class="cage__shell">
+          <div class="cage__dome">
+            <div data-sp-dome="1"></div>
+            <div class="cage__bay">
+              <div class="swing">
+                <svg class="swing__wires" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+                  <line x1="50" y1="-3" x2="13.2" y2="100" stroke="#C99A2E" stroke-width="1.45" stroke-linecap="round"/>
+                  <line x1="50" y1="-3" x2="86.8" y2="100" stroke="#C99A2E" stroke-width="1.45" stroke-linecap="round"/>
+                </svg>
+                <div class="canary" data-sp-canary="1"></div>
+                <div class="perch"></div>
+                <div class="feather-burst" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+              </div>
+            </div>
+          </div>
+          <div class="cage__well">
+            <header class="cage__plaque">
+              <h2 class="cage__kicker">Cage 1 · Happy Path</h2>
+              <span class="cage__viewport">1280×800 · Desktop Buyer</span>
+            </header>
+            <div class="cage__meta">
+              <span class="cage__id">box-hp-7f2a</span>
+              <span class="state-pill">AWAITING APPROVAL</span>
+            </div>
+            <div class="meters">
+              <div class="meter" data-meter="cpu">
+                <span>CPU</span>
+                <span class="meter__track"><span class="meter__fill" style="--v:18%"></span></span>
+                <span class="meter__val">18% of 1 vCPU</span>
+              </div>
+              <div class="meter" data-meter="ram">
+                <span>RAM</span>
+                <span class="meter__track"><span class="meter__fill" style="--v:28%"></span></span>
+                <span class="meter__val">142 MB of 512 MB</span>
+              </div>
+            </div>
+            <p class="log"><strong>step 4 of 5</strong> · hold_for_approval · checkout.submit</p>
+            <div class="cage__stage">
+              <div class="gate">
+                <h3 class="gate__title">Approve before submit</h3>
+                <p class="gate__reason">Box 1 wants to click Place order on /checkout. Irreversible submit is held until you decide.</p>
+                <div class="gate__actions">
+                  <button type="button" class="btn btn--approve" data-approve>Approve</button>
+                  <button type="button" class="btn btn--block" data-block>Block</button>
+                </div>
+              </div>
+              <div class="passed">Passed</div>
+              <div class="blocked">Blocked</div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- Cage 2 -->
+      <article class="cage cage--2" data-status="bugs" aria-label="Cage 2 Mobile Vision Check">
+        <div class="cage__shell">
+          <div class="cage__dome">
+            <div data-sp-dome="2"></div>
+            <div class="cage__bay">
+              <div class="swing">
+                <svg class="swing__wires" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+                  <line x1="50" y1="-3" x2="13.2" y2="100" stroke="#C99A2E" stroke-width="1.45" stroke-linecap="round"/>
+                  <line x1="50" y1="-3" x2="86.8" y2="100" stroke="#C99A2E" stroke-width="1.45" stroke-linecap="round"/>
+                </svg>
+                <div class="canary" data-sp-canary="2"></div>
+                <div class="perch"></div>
+                <div class="feather-burst" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+              </div>
+            </div>
+          </div>
+          <div class="cage__well">
+            <header class="cage__plaque">
+              <h2 class="cage__kicker">Cage 2 · Mobile Vision</h2>
+              <span class="cage__viewport">390×844 · Mobile</span>
+            </header>
+            <div class="cage__meta">
+              <span class="cage__id">box-mv-3c91</span>
+              <span class="state-pill">UI BUGS FOUND</span>
+            </div>
+            <div class="meters">
+              <div class="meter" data-meter="cpu">
+                <span>CPU</span>
+                <span class="meter__track"><span class="meter__fill" style="--v:22%"></span></span>
+                <span class="meter__val">22% of 1 vCPU</span>
+              </div>
+              <div class="meter" data-meter="ram">
+                <span>RAM</span>
+                <span class="meter__track"><span class="meter__fill" style="--v:33%"></span></span>
+                <span class="meter__val">168 MB of 512 MB</span>
+              </div>
+            </div>
+            <p class="log"><strong>step 3 of 4</strong> · vision_audit · 2 findings</p>
+            <div class="cage__stage">
+              <div class="device-wrap">
+                <div class="device" aria-label="Simulated 390 by 844 mobile checkout screenshot">
+                  <div class="device__chrome"></div>
+                  <div class="phone">
+                    <div class="phone__head">Night Market</div>
+                    <div class="phone__body">
+                      <div class="phone__eyebrow">Limited drop</div>
+                      <div class="bug bug--overlap">
+                        <h3 class="phone__title">Brass perch field notes</h3>
+                        <p class="phone__price">$48 · in stock</p>
+                        <span class="bbox__lab">Med · Overlap</span>
+                      </div>
+                      <div class="bug bug--cta">
+                        <div class="phone__cta">Buy / Checkout</div>
+                        <span class="bbox__lab">High · Clipped CTA</span>
+                      </div>
+                    </div>
+                    <div class="phone__dock"><span>Bag · 1</span><span>Account</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- Cage 3 -->
+      <article class="cage cage--3" data-status="dead" aria-label="Cage 3 Chaos Gremlin">
+        <div class="cage__shell">
+          <div class="cage__dome">
+            <div data-sp-dome="3"></div>
+            <div class="cage__bay">
+              <div class="swing">
+                <svg class="swing__wires" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+                  <line x1="50" y1="-3" x2="13.2" y2="100" stroke="#C99A2E" stroke-width="1.45" stroke-linecap="round"/>
+                  <line x1="50" y1="-3" x2="86.8" y2="100" stroke="#C99A2E" stroke-width="1.45" stroke-linecap="round"/>
+                </svg>
+                <div class="canary" data-sp-canary="3"></div>
+                <div class="perch"></div>
+                <div class="feather-burst" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+              </div>
+            </div>
+          </div>
+          <div class="cage__well">
+            <header class="cage__plaque">
+              <h2 class="cage__kicker">Cage 3 · Chaos Gremlin</h2>
+              <span class="cage__viewport">1280×800 · Adversarial</span>
+            </header>
+            <div class="cage__meta">
+              <span class="cage__id">box-cg-9e40</span>
+              <span class="state-pill">CONTAINED · WIPED</span>
+            </div>
+            <div class="meters">
+              <div class="meter" data-meter="cpu">
+                <span>CPU</span>
+                <span class="meter__track"><span class="meter__fill" style="--v:0%"></span></span>
+                <span class="meter__val">0% of 1 vCPU</span>
+              </div>
+              <div class="meter" data-meter="ram">
+                <span>RAM</span>
+                <span class="meter__track"><span class="meter__fill" style="--v:0%"></span></span>
+                <span class="meter__val">0 MB of 512 MB</span>
+              </div>
+            </div>
+            <p class="log"><strong>contained</strong> · SIGKILL · 1,840 ms</p>
+            <div class="cage__stage">
+              <div class="receipt">
+                <p class="receipt__kicker">Demo Run · simulated telemetry</p>
+                <h3 class="receipt__title">Containment Receipt</h3>
+                <dl>
+                  <dt>trigger</dt>
+                  <dd>prompt_injection_detected + cpu_limit_exceeded</dd>
+                  <dt>signal</dt>
+                  <dd>SIGKILL</dd>
+                  <dt>elapsed</dt>
+                  <dd>1,840 ms</dd>
+                  <dt>peak</dt>
+                  <dd>99% CPU / 498 MB</dd>
+                  <dt>secrets_exposed</dt>
+                  <dd>0</dd>
+                  <dt>host_impact</dt>
+                  <dd>none</dd>
+                  <dt>container_destroyed</dt>
+                  <dd>true</dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+    </main>
+
+    <footer class="dock">
+      <div class="progress" role="progressbar" aria-label="Test completion" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
+        <div class="progress__fill" style="--p:100%"></div>
+      </div>
+      <div class="dock__row">
+        <p class="verdict" data-verdict="do-not-ship">DO NOT SHIP</p>
+        <p class="rollup">
+          <strong data-rollup>3 isolated Vultr cages · 18.4s · 0 secrets exposed · 1 cage destroyed · 2 mobile UI bugs</strong>
+          <span class="sim-note">Demo Run · simulated telemetry</span>
+        </p>
+        <div class="dock__actions">
+          <button type="button" class="btn btn--ghost" data-action="preview">Preview red-boxed shot</button>
+          <button type="button" class="btn btn--primary" data-action="copy">Copy Fix Prompt for Cursor</button>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <div class="modal" id="shot-modal" role="dialog" aria-modal="true" aria-labelledby="shot-title">
+    <div class="modal__frame">
+      <h2 id="shot-title">Cage 2 · 390×844 annotated shot</h2>
+      <div class="device" aria-label="Enlarged simulated mobile checkout with red bounding boxes">
+        <div class="device__chrome"></div>
+        <div class="phone">
+          <div class="phone__head">Night Market</div>
+          <div class="phone__body">
+            <div class="phone__eyebrow">Limited drop</div>
+            <div class="bug bug--overlap">
+              <h3 class="phone__title">Brass perch field notes</h3>
+              <p class="phone__price">$48 · in stock</p>
+              <span class="bbox__lab">Med · Overlap</span>
+            </div>
+            <div class="bug bug--cta">
+              <div class="phone__cta">Buy / Checkout</div>
+              <span class="bbox__lab">High · Clipped CTA</span>
+            </div>
+          </div>
+          <div class="phone__dock"><span>Bag · 1</span><span>Account</span></div>
+        </div>
+      </div>
+      <button type="button" class="btn btn--ghost modal__close" data-close>Close</button>
+    </div>
+  </div>
+
+  <script src="canary-svg.js"></script>
+  <script src="demo.js"></script>
+</body>
+</html>
