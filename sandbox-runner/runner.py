@@ -66,11 +66,22 @@ OBSERVE_JS = r"""
     };
   });
   // Layout bugs measured from geometry: elements spilling past the viewport.
+  // Content inside a horizontal scroller (carousel, filmstrip) is reachable by scrolling, not clipped.
+  const inScroller = (el) => {
+    for (let p = el.parentElement; p && p !== document.body && p !== document.documentElement; p = p.parentElement) {
+      const ox = getComputedStyle(p).overflowX;
+      if (ox === 'auto' || ox === 'scroll') return true;
+    }
+    return false;
+  };
   const overflow = [];
   for (const el of document.querySelectorAll('button, a, input, h1, h2, img, [class*="cta"], [class*="btn"]')) {
-    if (!isVisible(el)) continue;
+    if (!isVisible(el) || inScroller(el)) continue;
     const r = el.getBoundingClientRect();
-    if (r.right > vw + 2 || r.left < -2) {
+    // Clipped means straddling an edge. An element entirely past it is parked off-canvas
+    // (slide-in menu, drawer) until opened, which is a normal pattern, not a layout bug.
+    const offCanvas = r.left >= vw - 2 || r.right <= 2;
+    if (!offCanvas && (r.right > vw + 2 || r.left < -2)) {
       overflow.push({
         sel: selFor(el),
         text: clean(el.innerText || el.value || el.getAttribute('alt') || '', 60),

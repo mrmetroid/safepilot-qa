@@ -75,7 +75,9 @@ MEASURE_JS = """(deviceWidth) => {
   for (const el of document.querySelectorAll('button, a, input, h1, h2, img, [class*="cta"], [class*="btn"]')) {
     if (!visible(el) || inScroller(el)) continue;
     const r = el.getBoundingClientRect();
-    if (r.right > vw + 2 || r.left < -2) overflow.push({
+    // Same rule as runner.py: entirely past an edge = parked off-canvas (closed menu), not clipped.
+    const offCanvas = r.left >= vw - 2 || r.right <= 2;
+    if (!offCanvas && (r.right > vw + 2 || r.left < -2)) overflow.push({
       sel: selFor(el), text: clean(el.innerText || el.value || el.getAttribute('alt') || '', 60),
       rect: [Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height)],
       overflow_px: Math.round(Math.max(r.right - vw, -r.left)) });

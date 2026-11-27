@@ -204,6 +204,20 @@ def _below_fold(bug: dict[str, Any], vp: dict[str, int]) -> bool:
     return bool(touches_bottom and _BELOW_FOLD_RE.search(text) and not _HORIZONTAL_RE.search(text))
 
 
+def _off_screen(bug: dict[str, Any], vp: dict[str, int]) -> bool:
+    """A vision bug whose box lies entirely outside the screenshot cannot have been seen in it.
+
+    This happens when the model repeats the DOM hint for an element parked off-canvas (a closed
+    slide-in menu at x >= viewport width). Clipping always shows up as a box that overlaps the image.
+    """
+    bb = bug.get("bbox")
+    if not (isinstance(bb, list) and len(bb) == 4 and all(isinstance(v, (int, float)) for v in bb)):
+        return False
+    x, y, w, h = bb
+    vw, vh = int(vp.get("width") or 390), int(vp.get("height") or 844)
+    return x >= vw or y >= vh or x + w <= 0 or y + h <= 0
+
+
 async def audit_mobile(obs: dict[str, Any], screenshot_b64: str | None, viewport: dict[str, int] | None = None,
                        model: str | None = None) -> dict[str, Any]:
     vp = viewport or {"width": 390, "height": 844}
@@ -221,7 +235,8 @@ async def audit_mobile(obs: dict[str, Any], screenshot_b64: str | None, viewport
                 log.warning("vision audit on %s failed (%s), retrying on %s", model, exc, settings.inference_model)
                 out = await chat_json(prompts.VISION_SYSTEM, user, screenshot_b64, max_tokens=900,
                                       model=settings.inference_model)
-            bugs = [b for b in out.get("bugs") or [] if isinstance(b, dict) and not _below_fold(b, vp)]
+            bugs = [b for b in out.get("bugs") or []
+                    if isinstance(b, dict) and not _below_fold(b, vp) and not _off_screen(b, vp)]
             for b in bugs:
                 b["source"] = "vultr-vision"
                 bb = b.get("bbox")
