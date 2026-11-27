@@ -186,6 +186,24 @@ def _overlap(a: list[float], b: list[float]) -> float:
     return iw * ih / small
 
 
+_BELOW_FOLD_RE = re.compile(r"\bbottom\b|below the fold|bottom edge|viewport height|vertical(ly)?|scroll", re.I)
+_HORIZONTAL_RE = re.compile(r"horizontal|right edge|left edge|width|wider|off-canvas|overflow-x", re.I)
+
+
+def _below_fold(bug: dict[str, Any], vp: dict[str, int]) -> bool:
+    """Viewport screenshots cut the page at the bottom edge; that is scrolling, not clipping.
+
+    Drops vision bugs that touch the bottom edge and describe vertical cut-off without any
+    horizontal overflow signal. Measured DOM geometry bugs never go through this filter.
+    """
+    bb = bug.get("bbox")
+    vh = int(vp.get("height") or 844)
+    text = f"{bug.get('title', '')} {bug.get('description', '')}"
+    touches_bottom = isinstance(bb, list) and len(bb) == 4 and all(isinstance(v, (int, float)) for v in bb) \
+        and bb[1] + bb[3] >= vh - 16
+    return bool(touches_bottom and _BELOW_FOLD_RE.search(text) and not _HORIZONTAL_RE.search(text))
+
+
 async def audit_mobile(obs: dict[str, Any], screenshot_b64: str | None, viewport: dict[str, int] | None = None,
                        model: str | None = None) -> dict[str, Any]:
     vp = viewport or {"width": 390, "height": 844}
@@ -203,7 +221,7 @@ async def audit_mobile(obs: dict[str, Any], screenshot_b64: str | None, viewport
                 log.warning("vision audit on %s failed (%s), retrying on %s", model, exc, settings.inference_model)
                 out = await chat_json(prompts.VISION_SYSTEM, user, screenshot_b64, max_tokens=900,
                                       model=settings.inference_model)
-            bugs = [b for b in out.get("bugs") or [] if isinstance(b, dict)]
+            bugs = [b for b in out.get("bugs") or [] if isinstance(b, dict) and not _below_fold(b, vp)]
             for b in bugs:
                 b["source"] = "vultr-vision"
                 bb = b.get("bbox")
