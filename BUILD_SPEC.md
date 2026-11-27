@@ -1,6 +1,6 @@
 # SafePilot QA Build Specification
 
-This is the engineering source of truth for SafePilot QA. Implement against this document. Do not invent infrastructure, models, URLs, or hackathon rules that are not written here.
+This is the engineering reference for SafePilot QA: it defines *how* each part is built. *What* will be implemented, in which order and by whom, is decided in [`docs/PLAN.md`](./docs/PLAN.md), which is the source of truth for scope. Implement every step in that plan against this document. Do not invent infrastructure, models, URLs, or hackathon rules that are not written here. If this document and `docs/PLAN.md` disagree about what to build, the plan wins and this document is updated to match.
 
 Companion files:
 
