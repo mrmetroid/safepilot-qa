@@ -8,8 +8,7 @@
 
 ## Waiting on Göran
 
-- Review and merge PR #3 (CI workflow).
-- Review and merge PR #4 (developer CLI).
+- Merge `fix/cli-test-ci-colour`: main CI is red since #4 merged (a CLI test that only fails with colour output on CI).
 - Decide how PR #1's `ci.yml` and PR #3's `ci.yml` combine; whichever merges second conflicts.
 - Assign owners for 5.5 to 6.5 in `PLAN.md`.
 - The 8-character room code for the Community check-in (6.4).
