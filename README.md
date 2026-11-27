@@ -1,4 +1,4 @@
-# SafePilot QA
+# Canary Swarm
 
 **Untrusted AI code deserves untrusted AI testers in disposable boxes.**
 
@@ -13,7 +13,7 @@ The Vultr Community Project Showcases form has no dedicated video field. Put the
 
 ## What it is
 
-SafePilot QA is a web-based Site QA Sweep agent for the Vultr Agent Runtime Hackathon (Stockholm, 27 November 2026).
+Canary Swarm is a web-based Site QA Sweep agent for the Vultr Agent Runtime Hackathon (Stockholm, 27 November 2026).
 
 Paste any public preview URL, or launch the built-in Adversarial Test App preset. The control plane then:
 
@@ -58,13 +58,13 @@ flowchart TB
 
 Each sandbox is created with hard memory, CPU, PID, and wall-clock caps, a read-only root filesystem, all Linux capabilities dropped, an empty environment (zero secrets), and forced `kill` plus `remove` on exit, timeout, OOM, or prompt-injection detection.
 
-**Infrastructure note:** the live Vultr API has **zero VX1 plans in Stockholm (`sto`)**. The closest VX1 regions are Amsterdam (`ams`), Frankfurt (`fra`), and London (`lhr`). SafePilot QA runs on **Stockholm Cloud Compute + Docker**, which matches the hackathon rules (a Vultr VM and a strict sandbox boundary). An optional control-plane toggle can burst into dedicated throwaway VMs via `POST https://api.vultr.com/v2/instances` when a customer wants full VM-level isolation.
+**Infrastructure note:** the live Vultr API has **zero VX1 plans in Stockholm (`sto`)**. The closest VX1 regions are Amsterdam (`ams`), Frankfurt (`fra`), and London (`lhr`). Canary Swarm runs on **Stockholm Cloud Compute + Docker**, which matches the hackathon rules (a Vultr VM and a strict sandbox boundary). An optional control-plane toggle can burst into dedicated throwaway VMs via `POST https://api.vultr.com/v2/instances` when a customer wants full VM-level isolation.
 
 ## How we use Vultr
 
 Copy the block below into the Vultr Project Showcases field **"How did you use Vultr?"**.
 
-> SafePilot QA runs entirely on Vultr. The FastAPI control plane and the live dashboard are hosted on a Stockholm Cloud Compute VM (regular `vc2`/`vhf`/`vhp`, because VX1 is not available in `sto`). Each QA run spawns three disposable Playwright Docker containers on that VM with hard CPU, memory, PID, and wall-clock caps, a read-only filesystem, all capabilities dropped, zero secrets inside the sandbox, and automatic destroy/reset after every run or immediately on containment. All planning and screenshot vision checks go through Vultr Serverless Inference at `https://api.vultrinference.com/v1` using the paid multimodal model `qwen3.8-flash-next` (with `glm-5.3-flash` as fallback). The inference API key stays on the control plane only. The same control plane can optionally burst into dedicated throwaway Vultr VMs via `POST /v2/instances` when a customer needs full VM-level isolation.
+> Canary Swarm runs entirely on Vultr. The FastAPI control plane and the live dashboard are hosted on a Stockholm Cloud Compute VM (regular `vc2`/`vhf`/`vhp`, because VX1 is not available in `sto`). Each QA run spawns three disposable Playwright Docker containers on that VM with hard CPU, memory, PID, and wall-clock caps, a read-only filesystem, all capabilities dropped, zero secrets inside the sandbox, and automatic destroy/reset after every run or immediately on containment. All planning and screenshot vision checks go through Vultr Serverless Inference at `https://api.vultrinference.com/v1` using the paid multimodal model `qwen3.8-flash-next` (with `glm-5.3-flash` as fallback). The inference API key stays on the control plane only. The same control plane can optionally burst into dedicated throwaway Vultr VMs via `POST /v2/instances` when a customer needs full VM-level isolation.
 
 ## The 3-box swarm
 

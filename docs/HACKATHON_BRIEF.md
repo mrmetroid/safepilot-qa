@@ -26,7 +26,7 @@ Build a web-based agent that performs real work, writing and running code or ope
 
 - **Comparison Shopper:** two or three product URLs in, screenshot-backed comparison table out.
 - **Form Filler:** structured data in, a multi-step web form filled, with a screenshot trail and an approve-before-submit gate.
-- **Site QA Sweep:** find broken flows and links in a web app, with screenshots and repro steps. **(SafePilot QA's track)**
+- **Site QA Sweep:** find broken flows and links in a web app, with screenshots and repro steps. **(Canary Swarm's track)**
 - **Research with Receipts:** a brief where every claim links to a screenshot of its source.
 - **Page Watcher:** monitor listing or pricing pages, extract structured data, and diff against the previous day.
 

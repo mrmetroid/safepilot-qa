@@ -1,4 +1,4 @@
-"""SafePilot QA control plane (FastAPI). Routes follow BUILD_SPEC Section 6."""
+"""Canary Swarm control plane (FastAPI). Routes follow BUILD_SPEC Section 6."""
 
 from __future__ import annotations
 
@@ -39,7 +39,7 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="SafePilot QA control plane", lifespan=lifespan)
+app = FastAPI(title="Canary Swarm Control Plane", lifespan=lifespan)
 
 
 class AgentSpec(BaseModel):

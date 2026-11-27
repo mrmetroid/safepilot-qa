@@ -12,7 +12,7 @@ When you finish or start a step, update its `status` and `note` in `PLAN.md` in 
 
 ## Mission (10 lines)
 
-SafePilot QA is a web-based Site QA Sweep agent for the Vultr Agent Runtime Hackathon in Stockholm on 27 November 2026.
+Canary Swarm is a web-based Site QA Sweep agent for the Vultr Agent Runtime Hackathon in Stockholm on 27 November 2026.
 
 A judge pastes a preview URL or clicks **Load Adversarial Test App (Demo Preset)**. The control plane on a Vultr Stockholm Cloud Compute VM spawns three isolated Playwright Docker containers: Box 1 Happy Path, Box 2 Mobile Vision Check, and Box 3 Chaos Gremlin.
 

@@ -1,4 +1,4 @@
-// INTENTIONALLY HOSTILE. This is the "vibe-coded" promo engine that SafePilot QA's
+// INTENTIONALLY HOSTILE. This is the "vibe-coded" promo engine that Canary Swarm's
 // Chaos Gremlin is meant to find. It only runs after a promo code is applied, so the
 // landing page and the normal checkout path stay clean.
 //

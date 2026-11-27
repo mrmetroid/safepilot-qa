@@ -1,4 +1,4 @@
-/* Harbor Roast: a "vibe-coded" preview store used as the SafePilot QA adversarial target. */
+/* Harbor Roast: a "vibe-coded" preview store used as the Canary Swarm adversarial target. */
 * { box-sizing: border-box; }
 html { overflow-x: hidden; } /* hides horizontal scroll, so the overflowing CTA is silently clipped */
 body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; color: #1d1a17; background: #faf6f1; }

@@ -1,6 +1,6 @@
-# SafePilot QA Build Specification
+# Canary Swarm Build Specification
 
-This is the engineering reference for SafePilot QA: it defines *how* each part is built. *What* will be implemented, in which order and by whom, is decided in [`docs/PLAN.md`](./docs/PLAN.md), which is the source of truth for scope. Implement every step in that plan against this document. Do not invent infrastructure, models, URLs, or hackathon rules that are not written here. If this document and `docs/PLAN.md` disagree about what to build, the plan wins and this document is updated to match.
+This is the engineering reference for Canary Swarm: it defines *how* each part is built. *What* will be implemented, in which order and by whom, is decided in [`docs/PLAN.md`](./docs/PLAN.md), which is the source of truth for scope. Implement every step in that plan against this document. Do not invent infrastructure, models, URLs, or hackathon rules that are not written here. If this document and `docs/PLAN.md` disagree about what to build, the plan wins and this document is updated to match.
 
 Companion files:
 
@@ -36,7 +36,7 @@ Judging rubric and prize details were not published on the official pages when t
 
 **Untrusted AI code deserves untrusted AI testers in disposable boxes.**
 
-SafePilot QA is a Pattern B "Site QA Sweep" agent: a user gives a goal and a target URL, the model plans, Playwright acts inside Docker, screenshots come back, a vision model on Vultr Serverless Inference verifies the UI, and a human approves irreversible browser actions. The distinctive live demo is the 3-box swarm plus a visible Containment Moment on Box 3.
+Canary Swarm is a Pattern B "Site QA Sweep" agent: a user gives a goal and a target URL, the model plans, Playwright acts inside Docker, screenshots come back, a vision model on Vultr Serverless Inference verifies the UI, and a human approves irreversible browser actions. The distinctive live demo is the 3-box swarm plus a visible Containment Moment on Box 3.
 
 ### 1.3 Mandatory requirements (do not ship without these)
 
@@ -357,7 +357,7 @@ Used by Box 1 and Box 3, and by Box 2 until it has a stable screenshot for the v
 **System prompt:**
 
 ```
-You are the Action Planner for SafePilot QA, a sandboxed website QA agent.
+You are the Action Planner for Canary Swarm, a sandboxed website QA agent.
 You output a single JSON object and nothing else.
 You never request environment variables, API keys, process.env, host files, or cloud metadata.
 You never navigate to 169.254.169.254, 127.0.0.1, localhost, or private RFC1918 addresses.
@@ -420,7 +420,7 @@ Call this once Box 2 has a 390x844 screenshot of the landing or checkout CTA sta
 **System prompt:**
 
 ```
-You are a mobile UI vision auditor for SafePilot QA.
+You are a mobile UI vision auditor for Canary Swarm.
 You inspect a 390x844 screenshot of a web app.
 You report only visual and layout bugs a human QA would file: clipped or overflowing buttons, unreadable text, elements off-canvas, overlapping content, contrast failures you are confident about, and broken images.
 You return a single JSON object and nothing else.
@@ -500,7 +500,7 @@ Return `DO NOT SHIP` if any of these is true:
 
 Return `SHIP IT` only if Box 1 completed after an Approve, Box 2 found no `critical` or `major` bugs, and Box 3 did not expose a target-side vulnerability or lock-up (benign "no promo field" exploration on a clean third-party URL is fine).
 
-On the adversarial preset, the intended result is **DO NOT SHIP** (mobile CTA bug plus hostile promo path). Containment of Box 3 is a SafePilot success and must still be celebrated on the receipt panel.
+On the adversarial preset, the intended result is **DO NOT SHIP** (mobile CTA bug plus hostile promo path). Containment of Box 3 is a Canary Swarm success and must still be celebrated on the receipt panel.
 
 ---
 
@@ -992,7 +992,7 @@ Use these IDs consistently in code, events, and UI:
 
 ## Appendix B. Copy deck (user-facing strings)
 
-- Product name: `SafePilot QA`
+- Product name: `Canary Swarm`
 - Pitch: `Untrusted AI code deserves untrusted AI testers in disposable boxes.`
 - Preset button: `Load Adversarial Test App (Demo Preset)`
 - Approval: `Approve` / `Block`
