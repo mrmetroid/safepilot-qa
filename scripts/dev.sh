@@ -63,7 +63,24 @@ fi
 
 say "python venv"
 VENV="$ROOT/backend/.venv"
-[ -x "$VENV/bin/uvicorn" ] || { python3 -m venv "$VENV"; "$VENV/bin/pip" install -q -r "$ROOT/backend/requirements.txt"; }
+# The backend needs Python >= 3.12 (PEP 604 unions in pydantic models). macOS ships 3.9 as python3,
+# so prefer uv-managed 3.12 and rebuild a venv that was created with an older interpreter.
+py_ok() { "$1" -c 'import sys; sys.exit(sys.version_info < (3, 12))' 2>/dev/null; }
+if [ -x "$VENV/bin/python" ] && ! py_ok "$VENV/bin/python"; then
+  echo "  backend venv uses $("$VENV/bin/python" -V 2>&1); rebuilding with Python 3.12"
+  rm -rf "$VENV"
+fi
+if [ ! -x "$VENV/bin/uvicorn" ]; then
+  if command -v uv >/dev/null 2>&1; then
+    uv venv -q --python 3.12 "$VENV"
+    uv pip install -q -p "$VENV/bin/python" -r "$ROOT/backend/requirements.txt"
+  elif py_ok python3; then
+    python3 -m venv "$VENV"; "$VENV/bin/pip" install -q -r "$ROOT/backend/requirements.txt"
+  else
+    echo "Python >= 3.12 is required for the backend. Install uv (https://docs.astral.sh/uv/) or python3.12." >&2
+    exit 1
+  fi
+fi
 
 if [ ! -f "$ROOT/.env" ]; then
   cp "$ROOT/.env.example" "$ROOT/.env"
